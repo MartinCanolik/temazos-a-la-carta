@@ -18,10 +18,6 @@ export function Navbar({ showBack = false }: NavbarProps) {
         )}
       </div>
 
-      <Link to="/">
-        <img src="/logo.png" alt="Música a la Carta" className="navbar__logo" />
-      </Link>
-
       <Link to="/pedidos" className="navbar__pedidos-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
           <path
