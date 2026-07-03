@@ -29,6 +29,7 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['pedidos']['Insert']>
+        Relationships: []
       }
     }
     Views: Record<string, never>
