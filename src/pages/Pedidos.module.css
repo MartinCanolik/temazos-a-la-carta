@@ -1,14 +1,48 @@
 .page {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
+  background-color: var(--page-background-color);
+}
+
+.page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+
+  background-color: var(--page-background-color);
+  background-image: var(--page-background-image);
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 430px auto; /* o el ancho que quieras */
+  transform: rotate(180deg);
+}
+
+.page::after {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 55%;
+  background: linear-gradient(
+    to bottom,
+    rgba(90, 10, 10, 0.72) 0%,
+    rgba(90, 10, 10, 0.3) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .content {
   flex: 1;
-  padding: 0.5rem 1.25rem 2rem;
+  padding: 2rem 1.25rem;
   padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  position: relative;
+  z-index: 1;
 }
 
 .heading {

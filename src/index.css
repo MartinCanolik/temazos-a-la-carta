@@ -1,67 +1,76 @@
 /* ─── Tokens de diseño ─────────────────────────────────────────────────────── */
 :root {
   /* Colores */
-  --color-red:          #8B1A1A;
-  --color-red-dark:     #6E1414;
-  --color-red-light:    #A52424;
-  --color-white:        #FFFFFF;
-  --color-black:        #0A0A0A;
-  --color-text:         #FFFFFF;
-  --color-text-muted:   rgba(255, 255, 255, 0.65);
-  --color-overlay:      rgba(0, 0, 0, 0.55);
+  --color-red: #8b1a1a;
+  --color-red-dark: #6e1414;
+  --color-red-light: #a52424;
+  --color-white: #ffffff;
+  --color-black: #0a0a0a;
+  --color-text: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.65);
+  --color-overlay: rgba(0, 0, 0, 0.55);
 
   /* Superficies (modales, cards) */
-  --color-surface:      #FFFFFF;
-  --color-surface-text: #1A1A1A;
-  --color-border:       rgba(0, 0, 0, 0.12);
+  --color-surface: #ffffff;
+  --color-surface-text: #1a1a1a;
+  --color-border: rgba(0, 0, 0, 0.12);
 
   /* Tipografía */
   --font-display: 'Anton', sans-serif;
-  --font-body:    'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
 
-  --text-xs:   0.75rem;   /* 12px */
-  --text-sm:   0.875rem;  /* 14px */
-  --text-base: 1rem;      /* 16px */
-  --text-lg:   1.125rem;  /* 18px */
-  --text-xl:   1.25rem;   /* 20px */
-  --text-2xl:  1.5rem;    /* 24px */
-  --text-3xl:  1.875rem;  /* 30px */
-  --text-4xl:  2.25rem;   /* 36px */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
 
   /* Espaciado */
-  --space-1:  0.25rem;
-  --space-2:  0.5rem;
-  --space-3:  0.75rem;
-  --space-4:  1rem;
-  --space-5:  1.25rem;
-  --space-6:  1.5rem;
-  --space-8:  2rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
   --space-10: 2.5rem;
   --space-12: 3rem;
   --space-16: 4rem;
 
   /* Radios */
-  --radius-sm:   0.375rem;
-  --radius-md:   0.75rem;
-  --radius-lg:   1rem;
-  --radius-xl:   1.5rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
   --radius-full: 9999px;
 
   /* Sombras */
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.25);
-  --shadow-md:  0 4px 12px rgba(0,0,0,0.3);
-  --shadow-lg:  0 8px 32px rgba(0,0,0,0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
 
   /* Transiciones */
-  --transition-fast:   150ms ease;
+  --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
 
   /* Layout mobile */
   --app-max-width: 430px;
+
+  /* Background compartido de las páginas */
+  --page-background-color: var(--color-red);
+  --page-background-image: url('/fondo.webp');
+  --page-background-size: cover;
+  --page-background-position: center top;
+  --page-background-repeat: no-repeat;
 }
 
 /* ─── Reset / Base ─────────────────────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -105,7 +114,8 @@ button {
   background: none;
 }
 
-input, textarea {
+input,
+textarea {
   font-family: var(--font-body);
 }
 
@@ -122,11 +132,11 @@ a {
   min-height: 100dvh;
   position: relative;
   overflow: hidden;
-  background-color: var(--color-red);
-  background-image: url('/fondo.webp');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
+  background-color: var(--page-background-color);
+  background-image: var(--page-background-image);
+  background-size: var(--page-background-size);
+  background-position: var(--page-background-position);
+  background-repeat: var(--page-background-repeat);
 }
 
 /* ─── Componentes comunes ──────────────────────────────────────────────────── */
@@ -143,8 +153,10 @@ a {
   font-size: var(--text-base);
   font-weight: 600;
   border-radius: var(--radius-full);
-  border: 2px solid rgba(255,255,255,0.25);
-  transition: background-color var(--transition-fast), transform var(--transition-fast);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  transition:
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -175,12 +187,14 @@ a {
   font-weight: 500;
   border-radius: var(--radius-full);
   border: 2px solid var(--color-white);
-  transition: background-color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
   cursor: pointer;
 }
 
 .btn-outline:hover {
-  background-color: rgba(255,255,255,0.1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .btn-outline:active {
@@ -192,19 +206,21 @@ a {
   width: 2rem;
   height: 2rem;
   border-radius: var(--radius-full);
-  border: 1.5px solid rgba(255,255,255,0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-white);
   font-size: 1.2rem;
   line-height: 1;
-  transition: background-color var(--transition-fast), opacity var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    opacity var(--transition-fast);
   flex-shrink: 0;
 }
 
 .btn-add:hover {
-  background-color: rgba(255,255,255,0.15);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .btn-add:disabled {
@@ -214,7 +230,7 @@ a {
 
 /* Canción ya pedida en la cola global */
 .btn-add--done {
-  border-color: rgba(255,255,255,0.35);
+  border-color: rgba(255, 255, 255, 0.35);
   font-size: 0.9rem;
 }
 
@@ -236,7 +252,7 @@ a {
 }
 
 .input-field::placeholder {
-  color: rgba(0,0,0,0.35);
+  color: rgba(0, 0, 0, 0.35);
 }
 
 /* Input de búsqueda (fondo blanco, sin borde visible) */
@@ -245,7 +261,7 @@ a {
   padding: var(--space-3) var(--space-5);
   border-radius: var(--radius-full);
   border: none;
-  background-color: rgba(255,255,255,0.95);
+  background-color: rgba(255, 255, 255, 0.95);
   color: var(--color-surface-text);
   font-size: var(--text-base);
   outline: none;
@@ -253,7 +269,7 @@ a {
 }
 
 .input-search::placeholder {
-  color: rgba(0,0,0,0.4);
+  color: rgba(0, 0, 0, 0.4);
 }
 
 /* ─── Navbar común ─────────────────────────────────────────────────────────── */
@@ -261,8 +277,9 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  padding-top: max(var(--space-4), env(safe-area-inset-top));
+  padding: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .navbar__logo {
@@ -273,7 +290,7 @@ a {
 .navbar__pedidos-link {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 0.375rem;
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--color-white);
@@ -287,16 +304,20 @@ a {
 
 /* ─── Skeleton loader ──────────────────────────────────────────────────────── */
 @keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
 }
 
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(255,255,255,0.08) 25%,
-    rgba(255,255,255,0.18) 50%,
-    rgba(255,255,255,0.08) 75%
+    rgba(255, 255, 255, 0.08) 25%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.08) 75%
   );
   background-size: 800px 100%;
   animation: shimmer 1.5s infinite;
