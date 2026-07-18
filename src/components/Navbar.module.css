@@ -1,0 +1,103 @@
+.backSlot {
+  width: 2rem;
+}
+
+.backLink {
+  color: var(--color-white);
+  font-size: 1.25rem;
+}
+
+.nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem;
+  padding-top: max(2rem, calc(env(safe-area-inset-top) + 0.5rem));
+}
+
+.donationsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-white);
+  letter-spacing: 0.02em;
+}
+
+.donationsLink svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.navbar__logo {
+  height: 3rem;
+  object-fit: contain;
+}
+
+.navbar__pedidos-link {
+  display: flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-white);
+  opacity: 0.9;
+}
+
+.navbar__pedidos-link svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.pedidosLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-white);
+  letter-spacing: 0.02em;
+}
+
+.pedidosLink svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-white);
+  color: var(--color-red);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.backSlot {
+  width: 2rem;
+}
+
+.backLink {
+  color: var(--color-white);
+  font-size: 1.25rem;
+}

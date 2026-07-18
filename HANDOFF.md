@@ -5,9 +5,11 @@ Estado al 25 jun 2026. Actualizar al inicio de cada sesión de trabajo.
 ---
 
 ## Fase 0 — COMPLETADA
+
 Proyecto inicializado. Stack: Vite + React + TypeScript + TanStack Query + Zustand + Supabase.
 
 Estructura relevante:
+
 ```
 src/
   main.tsx, App.tsx          — Router + QueryClientProvider
@@ -20,45 +22,54 @@ src/
     useCrearPedidos.ts       — mutación INSERT + manejo de duplicado
   lib/  supabase.ts | database.types.ts | deviceId.ts | spotifyApi.ts
   types/spotify.ts
-public/  fondo.webp | artistas.jpeg
+public/  fondo.webp | homeimg.webp
 ```
 
 ---
 
 ## Fase 1 — COMPLETADA
+
 Edge Function `spotify-playlist` deployada. Devuelve `{ tracks: Track[], cached }`.
 
 **Aprendizajes Spotify (cambios feb/mar 2026):**
+
 - Client Credentials ya no puede leer playlists → se usa Authorization Code + refresh token.
 - Endpoint correcto: `/v1/playlists/{id}/items` (el campo de track es `item`, no `track`).
 - La cuenta dueña necesita ser collaborator/owner de la playlist y tener Premium.
 - `scripts/get-spotify-refresh-token.mjs` obtiene el refresh token (levanta server en `http://127.0.0.1:3000/callback`, registrá esa URI en el dashboard de Spotify).
 
 **Secrets en Supabase (Settings → Edge Functions → Secrets):**
+
 - `SPOTIFY_CLIENT_ID`
-- `SPOTIFY_CLIENT_SECRET`  ← ⚠️ rotar antes de producción
+- `SPOTIFY_CLIENT_SECRET` ← ⚠️ rotar antes de producción
 - `SPOTIFY_REFRESH_TOKEN`
 - `SPOTIFY_PLAYLIST_ID` = `1hzqzUtqzX5mHcOEpdAWnl`
 
 **Deploy:**
+
 ```
 supabase functions deploy spotify-playlist --project-ref ipyticieruuqvxlwidcp --no-verify-jwt
 ```
+
 `config.toml` ya tiene `verify_jwt = false` para esta función.
 
 ---
 
 ## Fase 2 — COMPLETADA
+
 Base de datos + Realtime conectados al frontend.
 
 ### SQL aplicado
+
 Archivo: `supabase/migrations/20260625000000_pedidos.sql`
 
 **Cómo aplicarlo en tu entorno:**
+
 - Opción A (recomendada): pegarlo en Supabase Studio → SQL Editor y ejecutar.
 - Opción B: `supabase db push` (si tenés el CLI linkeado al proyecto).
 
 Incluye:
+
 - Tabla `public.pedidos` con CHECK constraints de longitud.
 - Índice único `pedidos_track_unico (track_id)` — bloqueo duro de duplicados.
 - RLS habilitado + policies `SELECT` e `INSERT` públicas.
@@ -66,6 +77,7 @@ Incluye:
 - Realtime activado vía `supabase_realtime` publication.
 
 ### Frontend
+
 - `usePedidos` — fetch inicial + helpers `usePedidosCount` y `usePedidosTrackIds`.
 - `usePedidosRealtime` — suscripción Realtime montada una sola vez en `Layout`.
   Escucha `INSERT` y `DELETE`, actualiza el cache de TanStack Query directamente.
@@ -78,6 +90,7 @@ Incluye:
 ---
 
 ## Fase 3 — PENDIENTE (Home)
+
 - Banner con imagen de fondo + título.
 - Botón "Ver repertorio" → `/repertorio`.
 - Acceso "Pedidos" con badge en tiempo real.
@@ -87,6 +100,7 @@ Incluye:
 ---
 
 ## Fase 4 — PENDIENTE (Repertorio con datos reales)
+
 - Hook `usePlaylist` (TanStack Query) → llama `spotifyApi.fetchPlaylist()`.
 - Reemplazar `MOCK_TRACKS` en `Repertorio.tsx`.
 - Buscador con debounce (hoy ya hay un filtro client-side, falta debounce).
@@ -94,18 +108,21 @@ Incluye:
 ---
 
 ## Fase 5 — PENDIENTE (Carrito + Modal)
+
 - El modal ya hace INSERT real (ver Fase 2).
 - Pendiente: feedback visual de éxito más elaborado, animación de salida.
 
 ---
 
 ## Fase 6 — PENDIENTE (Pedidos en vivo)
+
 - `Pedidos.tsx` ya muestra la cola real en tiempo real.
 - Opcional: resaltar "mis pedidos" comparando `device_id`.
 
 ---
 
 ## Fase 7 — PENDIENTE (Pulido + deploy)
+
 - Skeletons en Repertorio y Pedidos.
 - Deploy a Vercel con env vars de producción.
 - README con instrucciones de setup.
@@ -113,6 +130,7 @@ Incluye:
 ---
 
 ## Pendientes de seguridad (antes de producción)
+
 1. Rotar el client secret de Spotify (quedó expuesto en una sesión anterior).
 2. Regenerar el refresh token con el nuevo client secret.
 3. Actualizar los secrets en Supabase.
@@ -121,6 +139,7 @@ Incluye:
 ---
 
 ## Notas del entorno
+
 - OS Windows, terminal PowerShell.
   - Sintaxis de env vars: `$env:VAR="valor"` (no `export`).
 - `supabase secrets set` en CLI no acepta `--project-ref` → cargar por Dashboard.
