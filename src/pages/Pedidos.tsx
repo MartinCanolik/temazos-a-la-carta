@@ -25,7 +25,10 @@ export function Pedidos() {
         {!isLoading && !isError && (pedidos ?? []).length > 0 && (
           <ol className={styles.list}>
             {pedidos!.map((pedido, idx) => (
-              <li key={pedido.id} className={styles.item}>
+              <li
+                key={pedido.id}
+                className={`${styles.item}${pedido.wants_to_sing ? ` ${styles.itemSinger}` : ''}`}
+              >
                 <span className={styles.num}>{idx + 1}</span>
 
                 <div className={styles.cover}>
@@ -38,7 +41,14 @@ export function Pedidos() {
 
                 <div className={styles.info}>
                   <span className={styles.trackName}>{pedido.track_name}</span>
-                  <span className={styles.requester}>{pedido.requester}</span>
+                  <span className={styles.requesterRow}>
+                    <span className={styles.requester}>{pedido.requester}</span>
+                    {pedido.wants_to_sing && (
+                      <span className={styles.singerBadge}>
+                        <span aria-hidden="true">🎤</span> Quiere cantar
+                      </span>
+                    )}
+                  </span>
                 </div>
               </li>
             ))}
