@@ -95,3 +95,17 @@
 .cta button {
   min-width: 200px;
 }
+
+/* ── Acceso al área de músicos ── */
+.musicosLink {
+  align-self: center;
+  margin: -0.75rem 0 1rem;
+  padding: 0.25rem 0.75rem;
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.musicosLink:hover {
+  color: var(--color-white);
+}
