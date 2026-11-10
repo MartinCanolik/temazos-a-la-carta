@@ -1,0 +1,96 @@
+import { useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { usePerfilPublico } from '@/hooks/usePerfiles'
+import { useAuth } from '@/auth/authContext'
+import { instagramUrl, perfilUrl, whatsappUrl } from '@/lib/perfil'
+import { PanelLayout } from './panel/PanelLayout'
+import styles from './panel/panel.module.css'
+
+/** Perfil público de un músico: /m/:slug */
+export function PerfilPublico() {
+  const { slug } = useParams<{ slug: string }>()
+  const { data: perfil, isLoading, isError } = usePerfilPublico(slug)
+  const { profile: miPerfil } = useAuth()
+  const [copiado, setCopiado] = useState(false)
+
+  const esMio = !!perfil && miPerfil?.id === perfil.id
+
+  async function compartir() {
+    if (!perfil?.slug) return
+    const url = perfilUrl(perfil.slug)
+    const shareData = { title: perfil.nombre ?? 'Músico', text: 'Mirá mi perfil de músico', url }
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+        return
+      } catch {
+        // cancelado por el usuario → caemos a copiar
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      window.prompt('Copiá el link de tu perfil:', url)
+    }
+  }
+
+  return (
+    <PanelLayout backTo={miPerfil ? '/panel' : '/'} showSignOut={false}>
+      {isLoading && <p className={styles.muted}>Cargando perfil…</p>}
+      {isError && <p className={styles.muted}>No se pudo cargar el perfil.</p>}
+      {!isLoading && !isError && !perfil && (
+        <p className={styles.muted}>No encontramos ese perfil. Revisá el link.</p>
+      )}
+
+      {perfil && (
+        <>
+          <div>
+            <p className={styles.kicker}>Músico{perfil.ciudad ? ` · ${perfil.ciudad}` : ''}</p>
+            <h1 className={styles.title}>{perfil.nombre}</h1>
+          </div>
+
+          {perfil.instrumentos.length > 0 && (
+            <div className={styles.chips}>
+              {perfil.instrumentos.map((i) => (
+                <span
+                  key={i}
+                  className={styles.chip}
+                  style={{ background: 'var(--color-white)', color: 'var(--color-red)' }}
+                >
+                  {i}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {perfil.bio && <p className={styles.subtitle}>{perfil.bio}</p>}
+
+          <div className={styles.row}>
+            {perfil.whatsapp && (
+              <a className="btn-outline" href={whatsappUrl(perfil.whatsapp)} target="_blank" rel="noreferrer">
+                WhatsApp
+              </a>
+            )}
+            {perfil.instagram && (
+              <a className="btn-outline" href={instagramUrl(perfil.instagram)} target="_blank" rel="noreferrer">
+                Instagram
+              </a>
+            )}
+          </div>
+
+          <button type="button" className="btn-primary" onClick={() => void compartir()}>
+            {copiado ? '¡Link copiado!' : esMio ? 'Compartir mi perfil' : 'Compartir perfil'}
+          </button>
+
+          {esMio && (
+            <Link to="/panel/perfil" className={styles.muted} style={{ textAlign: 'center' }}>
+              Editar mi perfil
+            </Link>
+          )}
+        </>
+      )}
+    </PanelLayout>
+  )
+}

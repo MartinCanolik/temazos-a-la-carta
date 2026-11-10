@@ -7,6 +7,8 @@ import { Repertorio } from '@/pages/Repertorio'
 import { Pedidos } from '@/pages/Pedidos'
 import { Login } from '@/pages/Login'
 import { PanelHome } from '@/pages/panel/PanelHome'
+import { EditarPerfil } from '@/pages/panel/EditarPerfil'
+import { PerfilPublico } from '@/pages/PerfilPublico'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { RequireMusico } from '@/auth/RequireMusico'
 
@@ -41,6 +43,15 @@ export function App() {
                   </RequireMusico>
                 }
               />
+              <Route
+                path="/panel/perfil"
+                element={
+                  <RequireMusico>
+                    <EditarPerfil />
+                  </RequireMusico>
+                }
+              />
+              <Route path="/m/:slug" element={<PerfilPublico />} />
             </Routes>
           </Layout>
         </BrowserRouter>
