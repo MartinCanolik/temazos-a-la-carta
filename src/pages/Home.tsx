@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import styles from './Home.module.css'
 import { Navbar } from '@/components/Navbar'
 
@@ -31,6 +31,11 @@ export function Home() {
           Ver repertorio
         </button>
       </div>
+
+      {/* Acceso discreto al área de músicos */}
+      <Link to="/panel" className={styles.musicosLink}>
+        Soy músico
+      </Link>
     </div>
   )
 }
