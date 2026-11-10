@@ -9,6 +9,7 @@ import { Login } from '@/pages/Login'
 import { PanelHome } from '@/pages/panel/PanelHome'
 import { EditarPerfil } from '@/pages/panel/EditarPerfil'
 import { MiRepertorio } from '@/pages/panel/MiRepertorio'
+import { Comparar } from '@/pages/panel/Comparar'
 import { PerfilPublico } from '@/pages/PerfilPublico'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { RequireMusico } from '@/auth/RequireMusico'
@@ -57,6 +58,14 @@ export function App() {
                 element={
                   <RequireMusico>
                     <MiRepertorio />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/comparar"
+                element={
+                  <RequireMusico>
+                    <Comparar />
                   </RequireMusico>
                 }
               />

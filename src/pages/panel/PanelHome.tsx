@@ -29,6 +29,12 @@ export function PanelHome() {
       title: 'Mi repertorio',
       text: 'Las canciones que tocás y tu versión.',
     },
+    {
+      to: '/panel/comparar',
+      icon: '🤝',
+      title: 'En común',
+      text: 'Compará tu repertorio con otro músico.',
+    },
   ]
   if (profile?.slug) {
     accesos.push({
