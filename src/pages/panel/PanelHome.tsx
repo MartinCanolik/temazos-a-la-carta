@@ -35,6 +35,12 @@ export function PanelHome() {
       title: 'En común',
       text: 'Compará tu repertorio con otro músico.',
     },
+    {
+      to: '/panel/toques',
+      icon: '📅',
+      title: 'Mis toques',
+      text: 'Agenda, paga y setlist de cada toque.',
+    },
   ]
   if (profile?.slug) {
     accesos.push({

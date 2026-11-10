@@ -10,6 +10,8 @@ import { PanelHome } from '@/pages/panel/PanelHome'
 import { EditarPerfil } from '@/pages/panel/EditarPerfil'
 import { MiRepertorio } from '@/pages/panel/MiRepertorio'
 import { Comparar } from '@/pages/panel/Comparar'
+import { MisToques } from '@/pages/panel/MisToques'
+import { EditarToque } from '@/pages/panel/EditarToque'
 import { PerfilPublico } from '@/pages/PerfilPublico'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { RequireMusico } from '@/auth/RequireMusico'
@@ -66,6 +68,22 @@ export function App() {
                 element={
                   <RequireMusico>
                     <Comparar />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/toques"
+                element={
+                  <RequireMusico>
+                    <MisToques />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/toques/:id"
+                element={
+                  <RequireMusico>
+                    <EditarToque />
                   </RequireMusico>
                 }
               />

@@ -92,6 +92,52 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['musico_canciones']['Insert']>
         Relationships: []
       }
+      toques: {
+        Row: {
+          id: string
+          musico_id: string
+          fecha: string
+          hora: string | null
+          lugar: string
+          ciudad: string | null
+          formato: string | null
+          paga: number | null
+          moneda: Moneda
+          con_quien: string | null
+          notas: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          musico_id?: string
+          fecha: string
+          hora?: string | null
+          lugar: string
+          ciudad?: string | null
+          formato?: string | null
+          paga?: number | null
+          moneda?: Moneda
+          con_quien?: string | null
+          notas?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['toques']['Insert']>
+        Relationships: []
+      }
+      toque_canciones: {
+        Row: {
+          toque_id: string
+          cancion_id: string
+          orden: number
+        }
+        Insert: {
+          toque_id: string
+          cancion_id: string
+          orden: number
+        }
+        Update: Partial<Database['public']['Tables']['toque_canciones']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -106,3 +152,7 @@ export type Rol = 'musico' | 'admin'
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type CancionMusico = Database['public']['Tables']['musico_canciones']['Row']
 export type CancionMusicoInsert = Database['public']['Tables']['musico_canciones']['Insert']
+export type Moneda = 'UYU' | 'USD' | 'ARS'
+export type Toque = Database['public']['Tables']['toques']['Row']
+export type ToqueInsert = Database['public']['Tables']['toques']['Insert']
+export type ToqueCancion = Database['public']['Tables']['toque_canciones']['Row']
