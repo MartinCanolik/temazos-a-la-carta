@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePerfilPublico } from '@/hooks/usePerfiles'
+import { useCancionesDe } from '@/hooks/useCancionesMusico'
 import { useAuth } from '@/auth/authContext'
 import { instagramUrl, perfilUrl, whatsappUrl } from '@/lib/perfil'
 import { PanelLayout } from './panel/PanelLayout'
@@ -89,8 +90,37 @@ export function PerfilPublico() {
               Editar mi perfil
             </Link>
           )}
+
+          <RepertorioPublico musicoId={perfil.id} />
         </>
       )}
     </PanelLayout>
+  )
+}
+
+function RepertorioPublico({ musicoId }: { musicoId: string }) {
+  const { data: canciones, isLoading } = useCancionesDe(musicoId)
+
+  if (isLoading) return <p className={styles.muted}>Cargando repertorio…</p>
+  if (!canciones || canciones.length === 0) return null
+
+  return (
+    <section className={styles.card} aria-labelledby="repertorio-publico">
+      <h2 id="repertorio-publico" className={styles.cardTitle}>
+        Repertorio · {canciones.length} {canciones.length === 1 ? 'canción' : 'canciones'}
+      </h2>
+      <ul className={styles.list}>
+        {canciones.map((c) => (
+          <li key={c.id} className={styles.listItem}>
+            <div className={styles.listMain}>
+              <span className={styles.listTitle}>{c.titulo}</span>
+              <span className={styles.listSub}>{c.artista}</span>
+            </div>
+            {c.tonalidad && <span className={styles.chip}>{c.tonalidad}</span>}
+            {c.version && <span className={styles.chip}>{c.version}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
