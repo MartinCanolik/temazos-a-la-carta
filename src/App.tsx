@@ -5,6 +5,17 @@ import { Home } from '@/pages/Home'
 import { Donaciones } from '@/pages/Donaciones'
 import { Repertorio } from '@/pages/Repertorio'
 import { Pedidos } from '@/pages/Pedidos'
+import { Login } from '@/pages/Login'
+import { PanelHome } from '@/pages/panel/PanelHome'
+import { EditarPerfil } from '@/pages/panel/EditarPerfil'
+import { MiRepertorio } from '@/pages/panel/MiRepertorio'
+import { Comparar } from '@/pages/panel/Comparar'
+import { MisToques } from '@/pages/panel/MisToques'
+import { EditarToque } from '@/pages/panel/EditarToque'
+import { GestionCola } from '@/pages/panel/GestionCola'
+import { PerfilPublico } from '@/pages/PerfilPublico'
+import { AuthProvider } from '@/auth/AuthProvider'
+import { RequireMusico } from '@/auth/RequireMusico'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,16 +29,78 @@ const queryClient = new QueryClient({
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/donaciones" element={<Donaciones />} />
-            <Route path="/repertorio" element={<Repertorio />} />
-            <Route path="/pedidos" element={<Pedidos />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/donaciones" element={<Donaciones />} />
+              <Route path="/repertorio" element={<Repertorio />} />
+              <Route path="/pedidos" element={<Pedidos />} />
+
+              {/* Área de músicos */}
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/panel"
+                element={
+                  <RequireMusico>
+                    <PanelHome />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/perfil"
+                element={
+                  <RequireMusico>
+                    <EditarPerfil />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/repertorio"
+                element={
+                  <RequireMusico>
+                    <MiRepertorio />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/comparar"
+                element={
+                  <RequireMusico>
+                    <Comparar />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/toques"
+                element={
+                  <RequireMusico>
+                    <MisToques />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/toques/:id"
+                element={
+                  <RequireMusico>
+                    <EditarToque />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/cola"
+                element={
+                  <RequireMusico>
+                    <GestionCola />
+                  </RequireMusico>
+                }
+              />
+              <Route path="/m/:slug" element={<PerfilPublico />} />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }
