@@ -1,9 +1,16 @@
 import { useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { getDeviceId } from '@/lib/deviceId'
 import type { Pedido } from '@/lib/database.types'
 
 export const PEDIDOS_QUERY_KEY = ['pedidos'] as const
+
+/**
+ * Máximo de canciones que un mismo dispositivo puede tener en la cola a la vez.
+ * Debe coincidir con el trigger `pedidos_limite_por_dispositivo` en Supabase.
+ */
+export const MAX_PEDIDOS_POR_DISPOSITIVO = 2
 
 async function fetchPedidos(): Promise<Pedido[]> {
   const { data, error } = await supabase
@@ -33,6 +40,15 @@ export function usePedidosCount(): number {
 export function usePedidosTrackIds(): Set<string> {
   const { data } = usePedidos()
   return useMemo(() => new Set((data ?? []).map((p) => p.track_id)), [data])
+}
+
+/** Pedidos en la cola hechos desde este dispositivo. */
+export function useMisPedidos(): Pedido[] {
+  const { data } = usePedidos()
+  return useMemo(() => {
+    const deviceId = getDeviceId()
+    return (data ?? []).filter((p) => p.device_id === deviceId)
+  }, [data])
 }
 
 /**

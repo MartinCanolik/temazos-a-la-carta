@@ -196,3 +196,10 @@
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
+
+/* ── Límite de pedidos por dispositivo ── */
+.limitHint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-top: -0.25rem;
+}

@@ -2,7 +2,11 @@ import { useState, useMemo } from 'react'
 import { Navbar } from '@/components/Navbar'
 import { PedidoModal } from '@/components/PedidoModal'
 import { useCartStore } from '@/store/cartStore'
-import { usePedidosTrackIds } from '@/hooks/usePedidos'
+import {
+  MAX_PEDIDOS_POR_DISPOSITIVO,
+  useMisPedidos,
+  usePedidosTrackIds,
+} from '@/hooks/usePedidos'
 import { usePlaylist } from '@/hooks/usePlaylist'
 import { useDebounce } from '@/hooks/useDebounce'
 import styles from './Repertorio.module.css'
@@ -15,7 +19,13 @@ export function Repertorio() {
 
   const addItem = useCartStore((s) => s.addItem)
   const hasItem = useCartStore((s) => s.hasItem)
+  const cartCount = useCartStore((s) => s.items.length)
   const pedidosTrackIds = usePedidosTrackIds()
+  const misPedidos = useMisPedidos()
+
+  // Lugares libres para este dispositivo (pedidos en cola + canciones en el carrito).
+  const lugaresLibres = Math.max(0, MAX_PEDIDOS_POR_DISPOSITIVO - misPedidos.length - cartCount)
+  const limiteAlcanzado = lugaresLibres === 0
 
   const { data: tracks, isLoading, isError, refetch } = usePlaylist()
   const debouncedSearch = useDebounce(search, 250)
@@ -47,6 +57,14 @@ export function Repertorio() {
           aria-label="Buscar canción o artista"
           disabled={isLoading}
         />
+
+        <p className={styles.limitHint} role="status">
+          {misPedidos.length >= MAX_PEDIDOS_POR_DISPOSITIVO
+            ? `Ya tenés ${MAX_PEDIDOS_POR_DISPOSITIVO} temazos en la cola. Cuando suenen, vas a poder pedir más.`
+            : `Podés pedir hasta ${MAX_PEDIDOS_POR_DISPOSITIVO} temazos · te ${
+                lugaresLibres === 1 ? 'queda 1' : `quedan ${lugaresLibres}`
+              }`}
+        </p>
 
         {/* Estado de carga — skeletons */}
         {isLoading && (
@@ -91,7 +109,7 @@ export function Repertorio() {
                 {filtered.map((track, idx) => {
                   const alreadyRequested = pedidosTrackIds.has(track.id)
                   const inCart = hasItem(track.id)
-                  const disabled = alreadyRequested || inCart
+                  const disabled = alreadyRequested || inCart || limiteAlcanzado
 
                   return (
                     <li key={track.id} className={styles.track}>
@@ -117,7 +135,9 @@ export function Repertorio() {
                             ? `${track.name} ya está pedida`
                             : inCart
                               ? `${track.name} ya está en tu carrito`
-                              : `Agregar ${track.name}`
+                              : limiteAlcanzado
+                                ? `Ya pediste ${MAX_PEDIDOS_POR_DISPOSITIVO} temazos`
+                                : `Agregar ${track.name}`
                         }
                         disabled={disabled}
                         onClick={() => {
