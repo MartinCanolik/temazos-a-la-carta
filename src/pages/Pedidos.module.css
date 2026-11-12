@@ -126,3 +126,34 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── Pedido de alguien que quiere cantar ── */
+.itemSinger {
+  margin: 0 -0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 3px 0 0 var(--color-white);
+}
+
+.requesterRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.singerBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-white);
+  color: var(--color-red);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
