@@ -11,6 +11,8 @@ import { EditarPerfil } from '@/pages/panel/EditarPerfil'
 import { MiRepertorio } from '@/pages/panel/MiRepertorio'
 import { Comparar } from '@/pages/panel/Comparar'
 import { Formacion } from '@/pages/panel/Formacion'
+import { Repertorios } from '@/pages/panel/Repertorios'
+import { ArmarRepertorio } from '@/pages/panel/ArmarRepertorio'
 import { MisToques } from '@/pages/panel/MisToques'
 import { EditarToque } from '@/pages/panel/EditarToque'
 import { GestionCola } from '@/pages/panel/GestionCola'
@@ -102,6 +104,30 @@ export function App() {
                 element={
                   <RequireMusico>
                     <Formacion />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/repertorios"
+                element={
+                  <RequireMusico>
+                    <Repertorios />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/repertorios/nuevo"
+                element={
+                  <RequireMusico>
+                    <ArmarRepertorio />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/repertorios/:id"
+                element={
+                  <RequireMusico>
+                    <ArmarRepertorio />
                   </RequireMusico>
                 }
               />

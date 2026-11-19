@@ -34,6 +34,21 @@ export function usePerfilesPorSlug(slugs: string[]) {
   })
 }
 
+/** Perfiles por id (para mostrar nombres de una formación guardada). */
+export function usePerfilesPorId(ids: string[]) {
+  const clave = [...ids].sort().join(',')
+  return useQuery({
+    queryKey: ['perfiles-por-id', clave],
+    enabled: ids.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Profile[]> => {
+      const { data, error } = await supabase.from('profiles').select('*').in('id', ids)
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
 /** Busca perfiles públicos por nombre o slug (máx. 8). Pide 1 extra por si hay que excluir al propio. */
 export function useBuscarPerfiles(texto: string, excluirId?: string) {
   const q = texto.trim()

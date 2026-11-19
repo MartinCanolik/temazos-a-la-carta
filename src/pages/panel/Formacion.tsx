@@ -36,7 +36,18 @@ export function Formacion() {
       {f.cargando && <p className={styles.muted}>Comparando repertorios…</p>}
       {f.error && <p className={styles.error}>No se pudo cargar la formación. Probá de nuevo.</p>}
 
-      {f.repertorios && !f.cargandoPerfiles && f.otros.length > 0 && <Resultado musicos={f.musicos} />}
+      {f.repertorios && !f.cargandoPerfiles && f.otros.length > 0 && (
+        <>
+          <Link
+            to={`/panel/repertorios/nuevo?m=${f.slugs.join(',')}`}
+            className="btn-primary"
+            style={{ textAlign: 'center' }}
+          >
+            🎼 Armar repertorio con esta formación
+          </Link>
+          <Resultado musicos={f.musicos} />
+        </>
+      )}
 
       <Link to="/panel/comparar" className={styles.muted} style={{ textAlign: 'center' }}>
         Comparar con un solo músico

@@ -54,6 +54,7 @@ export function useFormacion() {
   return {
     miId: user?.id,
     slugs,
+    setSlugs,
     miembros,
     otros,
     noEncontrados,
