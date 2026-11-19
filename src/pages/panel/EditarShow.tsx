@@ -199,14 +199,20 @@ function Formulario({ show, cobro }: { show: ShowConParticipantes | null; cobro:
   // ── Lineup: seeded from the show's participants (as ?m=slugs) the first time
   const existentes = useMemo(() => show?.participantes.map((p) => p.musico_id) ?? [], [show])
   const otrosExistentes = useMemo(() => existentes.filter((id) => id !== miId), [existentes, miId])
-  const { data: perfilesExistentes } = usePerfilesPorId(otrosExistentes)
+  const { data: perfilesExistentes, isError: errorPerfiles } = usePerfilesPorId(otrosExistentes)
   const [sembrado, setSembrado] = useState(otrosExistentes.length === 0 || !!params.get('m'))
   useEffect(() => {
-    if (sembrado || !perfilesExistentes) return
+    if (sembrado) return
+    // A failed profile fetch must not block saving: participants are kept by id, shown as «Músico».
+    if (errorPerfiles) {
+      setSembrado(true)
+      return
+    }
+    if (!perfilesExistentes) return
     const slugs = perfilesExistentes.map((p) => p.slug).filter((s): s is string => !!s)
     if (slugs.length > 0) f.setSlugs(slugs)
     setSembrado(true)
-  }, [sembrado, perfilesExistentes, f])
+  }, [sembrado, perfilesExistentes, errorPerfiles, f])
 
   const resolubles = useMemo(
     () => new Set((perfilesExistentes ?? []).filter((p) => p.slug).map((p) => p.id)),
@@ -240,19 +246,30 @@ function Formulario({ show, cobro }: { show: ShowConParticipantes | null; cobro:
     const cobroPayload = construirCobro({ importe, moneda, estado: estadoCobro, cobradoEn, notas: notasCobro }, hoy)
     if (!cobroPayload) return setError('El cobro tiene que ser un número.')
 
+    const { agregar, quitar } = musicosAGuardar(miembroIds, existentes, resolubles)
+    if (!soyCreador && quitar.length > 0) {
+      return setError('Sólo quien creó el show puede sacar músicos. Volvé a sumarlos para guardar.')
+    }
+
     try {
       await guardar.mutateAsync({
         id: show?.id ?? null,
         datos: construirDatosShow({
           nombre, fecha, hora, lugar, ciudad, zona, estado, visibilidad, entradaInfo, entradaUrl, repertorioId, invitados, notas,
         }),
-        musicoIds: musicosAGuardar(miembroIds, existentes, soyCreador, resolubles),
+        musicoIds: agregar,
+        quitarIds: quitar,
         cobro: cobroPayload,
       })
       if (!show) navigate('/panel/shows', { replace: true })
       else setMensaje('Show guardado ✓')
-    } catch {
-      setError('No se pudo guardar el show. Revisá los datos y probá de nuevo.')
+    } catch (e) {
+      const code = (e as { code?: string } | null)?.code
+      setError(
+        code === '42501'
+          ? 'No tenés permiso para hacer ese cambio (sólo quien creó el show puede sacar músicos).'
+          : 'No se pudo guardar el show. Revisá los datos y probá de nuevo.',
+      )
     }
   }
 
@@ -455,6 +472,11 @@ function Formulario({ show, cobro }: { show: ShowConParticipantes | null; cobro:
             </li>
           ))}
         </ul>
+        {errorPerfiles && (
+          <p className={styles.hint} role="status">
+            No pudimos cargar los nombres de los músicos invitados. Se mantienen igual al guardar.
+          </p>
+        )}
         {f.noEncontrados.map((s) => (
           <p key={s} className={styles.error}>
             No encontramos a «{s}».{' '}
