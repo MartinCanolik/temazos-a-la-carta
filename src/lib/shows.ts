@@ -44,12 +44,13 @@ export function formatearHora(hora: string | null): string | null {
   return hora ? hora.slice(0, 5) : null
 }
 
+/**
+ * Always prefixes the ISO code ("UYU 12.000", "ARS 12.000", "USD 50"): a bare "$" is ambiguous
+ * between Argentine and Uruguayan pesos.
+ */
 export function formatearPlata(monto: number, moneda: Moneda): string {
-  return new Intl.NumberFormat('es-UY', {
-    style: 'currency',
-    currency: moneda,
-    maximumFractionDigits: 0,
-  }).format(monto)
+  const numero = new Intl.NumberFormat('es-UY', { maximumFractionDigits: 0 }).format(monto)
+  return `${moneda} ${numero}`
 }
 
 /** Is `fecha` in the same month as `hoy`? (both YYYY-MM-DD) */

@@ -7,6 +7,8 @@ import {
   dividirAgenda,
   esDelMes,
   etiquetaEstado,
+  formatearPlata,
+  formatearTotales,
   etiquetaParticipacion,
   explicarVisibilidad,
   hoyISO,
@@ -262,5 +264,18 @@ describe('played songs', () => {
       { cancion_id: 'a', veces: 3 },
       { cancion_id: 'b', veces: 2 },
     ])
+  })
+})
+
+describe('formatearPlata', () => {
+  it('always shows the currency code so pesos are never ambiguous', () => {
+    expect(formatearPlata(12000, 'UYU')).toBe('UYU 12.000')
+    expect(formatearPlata(12000, 'ARS')).toBe('ARS 12.000')
+    expect(formatearPlata(50, 'USD')).toBe('USD 50')
+  })
+
+  it('joins per-currency totals without mixing them', () => {
+    // Order follows MONEDAS (UYU, USD, ARS).
+    expect(formatearTotales({ ARS: 1000, USD: 20 })).toBe('USD 20 + ARS 1.000')
   })
 })
