@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from '@/components/Layout'
 import { Home } from '@/pages/Home'
@@ -13,8 +13,8 @@ import { Comparar } from '@/pages/panel/Comparar'
 import { Formacion } from '@/pages/panel/Formacion'
 import { Repertorios } from '@/pages/panel/Repertorios'
 import { ArmarRepertorio } from '@/pages/panel/ArmarRepertorio'
-import { MisToques } from '@/pages/panel/MisToques'
-import { EditarToque } from '@/pages/panel/EditarToque'
+import { Shows } from '@/pages/panel/Shows'
+import { EditarShow } from '@/pages/panel/EditarShow'
 import { GestionCola } from '@/pages/panel/GestionCola'
 import { PerfilPublico } from '@/pages/PerfilPublico'
 import { AuthProvider } from '@/auth/AuthProvider'
@@ -76,21 +76,32 @@ export function App() {
                 }
               />
               <Route
-                path="/panel/toques"
+                path="/panel/shows"
                 element={
                   <RequireMusico>
-                    <MisToques />
+                    <Shows />
                   </RequireMusico>
                 }
               />
               <Route
-                path="/panel/toques/:id"
+                path="/panel/shows/nuevo"
                 element={
                   <RequireMusico>
-                    <EditarToque />
+                    <EditarShow />
                   </RequireMusico>
                 }
               />
+              <Route
+                path="/panel/shows/:id"
+                element={
+                  <RequireMusico>
+                    <EditarShow />
+                  </RequireMusico>
+                }
+              />
+              {/* The old per-musician "toques" became shows */}
+              <Route path="/panel/toques" element={<Navigate to="/panel/shows" replace />} />
+              <Route path="/panel/toques/:id" element={<Navigate to="/panel/shows" replace />} />
               <Route
                 path="/panel/cola"
                 element={

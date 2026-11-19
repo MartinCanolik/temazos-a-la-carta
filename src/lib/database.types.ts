@@ -122,51 +122,150 @@ export type Database = {
           },
         ]
       }
-      toques: {
+      shows: {
         Row: {
           id: string
-          musico_id: string
+          creado_por: string
+          nombre: string
           fecha: string
           hora: string | null
-          lugar: string
+          lugar: string | null
           ciudad: string | null
-          formato: string | null
-          paga: number | null
-          moneda: Moneda
-          con_quien: string | null
+          /** Neighbourhood / area, used by zone filters. */
+          zona: string | null
+          estado: EstadoShow
+          visibilidad: VisibilidadShow
+          /** Price / how to book. */
+          entrada_info: string | null
+          entrada_url: string | null
+          repertorio_id: string | null
+          /** Free-text guests without an account. */
+          invitados: string | null
           notas: string | null
+          /** Set when the songs actually played were confirmed. */
+          canciones_confirmadas_en: string | null
           created_at: string
+          updated_at: string
         }
+        /** Clients write shows through the `guardar_show` RPC (only DELETE is direct, creator only). */
         Insert: {
           id?: string
-          musico_id?: string
+          creado_por?: string
+          nombre: string
           fecha: string
           hora?: string | null
-          lugar: string
+          lugar?: string | null
           ciudad?: string | null
-          formato?: string | null
-          paga?: number | null
-          moneda?: Moneda
-          con_quien?: string | null
+          zona?: string | null
+          estado?: EstadoShow
+          visibilidad?: VisibilidadShow
+          entrada_info?: string | null
+          entrada_url?: string | null
+          repertorio_id?: string | null
+          invitados?: string | null
           notas?: string | null
+          canciones_confirmadas_en?: string | null
           created_at?: string
+          updated_at?: string
         }
-        Update: Partial<Database['public']['Tables']['toques']['Insert']>
-        Relationships: []
+        Update: Partial<Database['public']['Tables']['shows']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'shows_repertorio_id_fkey'
+            columns: ['repertorio_id']
+            isOneToOne: false
+            referencedRelation: 'repertorios'
+            referencedColumns: ['id']
+          },
+        ]
       }
-      toque_canciones: {
+      show_musicos: {
         Row: {
-          toque_id: string
-          cancion_id: string
-          orden: number
+          show_id: string
+          musico_id: string
+          estado: EstadoParticipacion
+          invitado_por: string | null
+          respondido_en: string | null
+        }
+        /** Written only through the show RPCs. */
+        Insert: {
+          show_id: string
+          musico_id: string
+          estado?: EstadoParticipacion
+          invitado_por?: string | null
+          respondido_en?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['show_musicos']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'show_musicos_show_id_fkey'
+            columns: ['show_id']
+            isOneToOne: false
+            referencedRelation: 'shows'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      /** Private fee of one musician for one show. Owner-only RLS. */
+      show_cobros: {
+        Row: {
+          show_id: string
+          musico_id: string
+          importe: number
+          moneda: Moneda
+          estado_cobro: EstadoCobro
+          cobrado_en: string | null
+          notas: string | null
         }
         Insert: {
-          toque_id: string
+          show_id: string
+          musico_id?: string
+          importe: number
+          moneda?: Moneda
+          estado_cobro?: EstadoCobro
+          cobrado_en?: string | null
+          notas?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['show_cobros']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'show_cobros_show_id_fkey'
+            columns: ['show_id']
+            isOneToOne: false
+            referencedRelation: 'shows'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      show_canciones_tocadas: {
+        Row: {
+          show_id: string
           cancion_id: string
           orden: number
         }
-        Update: Partial<Database['public']['Tables']['toque_canciones']['Insert']>
-        Relationships: []
+        /** Written only through `confirmar_canciones_tocadas`. */
+        Insert: {
+          show_id: string
+          cancion_id: string
+          orden: number
+        }
+        Update: Partial<Database['public']['Tables']['show_canciones_tocadas']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'show_canciones_tocadas_show_id_fkey'
+            columns: ['show_id']
+            isOneToOne: false
+            referencedRelation: 'shows'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'show_canciones_tocadas_cancion_id_fkey'
+            columns: ['cancion_id']
+            isOneToOne: false
+            referencedRelation: 'canciones'
+            referencedColumns: ['id']
+          },
+        ]
       }
       repertorios: {
         Row: {
@@ -268,6 +367,22 @@ export type Database = {
         Args: { p_id: string; p_nombre?: string | null }
         Returns: string
       }
+      guardar_show: {
+        Args: { p_id: string | null; p_datos: ShowDatosInput; p_musicos: string[]; p_cobro?: CobroInput | null }
+        Returns: string
+      }
+      responder_invitacion: {
+        Args: { p_show_id: string; p_aceptar: boolean }
+        Returns: undefined
+      }
+      salir_de_show: {
+        Args: { p_show_id: string }
+        Returns: undefined
+      }
+      confirmar_canciones_tocadas: {
+        Args: { p_show_id: string; p_cancion_ids: string[] }
+        Returns: undefined
+      }
     }
     Enums: Record<string, never>
   }
@@ -293,9 +408,40 @@ export type CancionMusicoInsert = Database['public']['Tables']['musico_canciones
 /** A musician's repertoire row with its catalog song flattened in (titulo, artista, spotify_track_id). */
 export type CancionMusico = CancionMusicoRow & Omit<CancionCatalogo, 'id'>
 export type Moneda = 'UYU' | 'USD' | 'ARS'
-export type Toque = Database['public']['Tables']['toques']['Row']
-export type ToqueInsert = Database['public']['Tables']['toques']['Insert']
-export type ToqueCancion = Database['public']['Tables']['toque_canciones']['Row']
+export type EstadoShow = 'programado' | 'realizado' | 'cancelado'
+export type VisibilidadShow = 'publico' | 'privado'
+export type EstadoParticipacion = 'pendiente' | 'aceptado' | 'rechazado'
+export type EstadoCobro = 'pendiente' | 'cobrado'
+export type Show = Database['public']['Tables']['shows']['Row']
+export type ShowMusico = Database['public']['Tables']['show_musicos']['Row']
+export type ShowCobro = Database['public']['Tables']['show_cobros']['Row']
+export type ShowCancionTocada = Database['public']['Tables']['show_canciones_tocadas']['Row']
+
+/** Payload `p_datos` of `guardar_show`. On update, `estado` / `visibilidad` keep their value when left out; the rest is replaced. */
+export interface ShowDatosInput {
+  nombre: string
+  fecha: string
+  hora?: string | null
+  lugar?: string | null
+  ciudad?: string | null
+  zona?: string | null
+  estado?: EstadoShow
+  visibilidad?: VisibilidadShow
+  entrada_info?: string | null
+  entrada_url?: string | null
+  repertorio_id?: string | null
+  invitados?: string | null
+  notas?: string | null
+}
+
+/** Payload `p_cobro` of `guardar_show`: the caller's own fee. A null `importe` removes it. */
+export interface CobroInput {
+  importe: number | null
+  moneda?: Moneda
+  estado_cobro?: EstadoCobro
+  cobrado_en?: string | null
+  notas?: string | null
+}
 export type Repertorio = Database['public']['Tables']['repertorios']['Row']
 export type RepertorioMusicoRow = Database['public']['Tables']['repertorio_musicos']['Row']
 export type RepertorioCancionRow = Database['public']['Tables']['repertorio_canciones']['Row']
