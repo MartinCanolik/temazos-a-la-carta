@@ -183,11 +183,39 @@ insert into public.shows (id, creado_por, nombre, fecha, hora, lugar, ciudad, zo
    'Plaza Pringles', 'Rosario', 'Centro', 'programado', 'publico', 'Entrada libre y gratuita.', null,
    null, null, null, null),
   ('c0000000-0000-0000-0000-000000000009', '22222222-2222-2222-2222-222222222222', 'Cumpleaños de Mara', current_date + 3, '21:00',
-   'Salón Don Bosco', 'CABA', 'Almagro', 'cancelado', 'privado', null, null,
+   'Salón Don Bosco', 'CABA', 'Almagro', 'cancelado', 'publico', 'Entrada $3.000.', null,
    null, null, 'Lo suspendieron por lluvia', null),
   ('c0000000-0000-0000-0000-000000000010', '11111111-1111-1111-1111-111111111111', 'Brunch acústico', current_date + 40, '12:00',
    'Café Vinilo', 'CABA', 'Palermo', 'programado', 'privado', null, null,
-   null, null, null, null);
+   null, null, null, null),
+  -- More public listing data: today, free entry, a lineup with someone without a public profile,
+  -- and a pending guest that must stay hidden.
+  ('c0000000-0000-0000-0000-000000000011', '11111111-1111-1111-1111-111111111111', 'Jam de los jueves', current_date, '21:00',
+   'Bar Fun Fun', 'Montevideo', 'Cordón', 'programado', 'publico', 'Entrada gratuita.', null,
+   null, null, null, null),
+  ('c0000000-0000-0000-0000-000000000012', '22222222-2222-2222-2222-222222222222', 'Tarde de jazz', current_date + 7, '18:00',
+   'Casa Bonita', 'CABA', 'Villa Crespo', 'programado', 'publico', 'Consumición mínima $4.500.', null,
+   null, 'con Tito (batería)', null, null),
+  ('c0000000-0000-0000-0000-000000000013', '33333333-3333-3333-3333-333333333333', 'Peña folclórica', current_date + 14, '21:30',
+   'El Cairo', 'Rosario', 'Pichincha', 'programado', 'publico', 'Entrada $3.500. Reservas por WhatsApp.', 'https://example.com/pena-el-cairo',
+   null, null, null, null),
+  -- Past public show, same venue as 03 with a different spelling (one venue, two shows).
+  -- Caro declined, so she does not count for it.
+  ('c0000000-0000-0000-0000-000000000014', '22222222-2222-2222-2222-222222222222', 'Rock de los 80', current_date - 45, '22:30',
+   'CAFÉ VINILO', 'CABA', 'Palermo', 'realizado', 'publico', 'Entrada $5.000.', null,
+   null, null, null, now() - interval '44 days'),
+  -- Past PRIVATE show at a public venue: counts for musicians and songs, never for venues.
+  ('c0000000-0000-0000-0000-000000000015', '22222222-2222-2222-2222-222222222222', 'Cumpleaños de Lola', current_date - 20, '21:00',
+   'Café Vinilo', 'CABA', 'Palermo', 'realizado', 'privado', null, null,
+   null, null, null, now() - interval '19 days'),
+  -- Past public show whose songs were never confirmed: counts for musician and venue, not for songs.
+  ('c0000000-0000-0000-0000-000000000016', '11111111-1111-1111-1111-111111111111', 'Acústico de invierno', current_date - 100, '20:00',
+   'La Trastienda', 'Montevideo', 'Ciudad Vieja', 'realizado', 'publico', 'Entrada $400.', null,
+   null, null, null, null),
+  -- Yesterday: keeps "Este mes" populated.
+  ('c0000000-0000-0000-0000-000000000017', '11111111-1111-1111-1111-111111111111', 'Noche de covers II', current_date - 1, '21:30',
+   'La Trastienda', 'Montevideo', 'Ciudad Vieja', 'realizado', 'publico', 'Entrada $500 en boletería.', null,
+   null, null, null, now());
 
 insert into public.show_musicos (show_id, musico_id, estado, invitado_por, respondido_en) values
   ('c0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'aceptado',  '11111111-1111-1111-1111-111111111111', now() - interval '31 days'),
@@ -213,7 +241,23 @@ insert into public.show_musicos (show_id, musico_id, estado, invitado_por, respo
   ('c0000000-0000-0000-0000-000000000009', '22222222-2222-2222-2222-222222222222', 'aceptado',  '22222222-2222-2222-2222-222222222222', now() - interval '8 days'),
   ('c0000000-0000-0000-0000-000000000009', '11111111-1111-1111-1111-111111111111', 'aceptado',  '22222222-2222-2222-2222-222222222222', now() - interval '7 days'),
   ('c0000000-0000-0000-0000-000000000010', '11111111-1111-1111-1111-111111111111', 'aceptado',  '11111111-1111-1111-1111-111111111111', now() - interval '1 day'),
-  ('c0000000-0000-0000-0000-000000000010', '22222222-2222-2222-2222-222222222222', 'pendiente', '11111111-1111-1111-1111-111111111111', null);
+  ('c0000000-0000-0000-0000-000000000010', '22222222-2222-2222-2222-222222222222', 'pendiente', '11111111-1111-1111-1111-111111111111', null),
+  ('c0000000-0000-0000-0000-000000000011', '11111111-1111-1111-1111-111111111111', 'aceptado',  '11111111-1111-1111-1111-111111111111', now() - interval '2 days'),
+  ('c0000000-0000-0000-0000-000000000011', '33333333-3333-3333-3333-333333333333', 'aceptado',  '11111111-1111-1111-1111-111111111111', now() - interval '1 day'),
+  ('c0000000-0000-0000-0000-000000000012', '22222222-2222-2222-2222-222222222222', 'aceptado',  '22222222-2222-2222-2222-222222222222', now() - interval '3 days'),
+  ('c0000000-0000-0000-0000-000000000012', '33333333-3333-3333-3333-333333333333', 'aceptado',  '22222222-2222-2222-2222-222222222222', now() - interval '2 days'),
+  -- The admin has no public profile (no slug): accepted, but omitted from the public lineup
+  ('c0000000-0000-0000-0000-000000000012', '99999999-9999-9999-9999-999999999999', 'aceptado',  '22222222-2222-2222-2222-222222222222', now() - interval '2 days'),
+  ('c0000000-0000-0000-0000-000000000013', '33333333-3333-3333-3333-333333333333', 'aceptado',  '33333333-3333-3333-3333-333333333333', now() - interval '5 days'),
+  ('c0000000-0000-0000-0000-000000000013', '11111111-1111-1111-1111-111111111111', 'pendiente', '33333333-3333-3333-3333-333333333333', null),
+  ('c0000000-0000-0000-0000-000000000014', '22222222-2222-2222-2222-222222222222', 'aceptado',  '22222222-2222-2222-2222-222222222222', now() - interval '50 days'),
+  ('c0000000-0000-0000-0000-000000000014', '11111111-1111-1111-1111-111111111111', 'aceptado',  '22222222-2222-2222-2222-222222222222', now() - interval '49 days'),
+  ('c0000000-0000-0000-0000-000000000014', '33333333-3333-3333-3333-333333333333', 'rechazado', '22222222-2222-2222-2222-222222222222', now() - interval '49 days'),
+  ('c0000000-0000-0000-0000-000000000015', '22222222-2222-2222-2222-222222222222', 'aceptado',  '22222222-2222-2222-2222-222222222222', now() - interval '25 days'),
+  ('c0000000-0000-0000-0000-000000000015', '33333333-3333-3333-3333-333333333333', 'pendiente', '22222222-2222-2222-2222-222222222222', null),
+  ('c0000000-0000-0000-0000-000000000016', '11111111-1111-1111-1111-111111111111', 'aceptado',  '11111111-1111-1111-1111-111111111111', now() - interval '105 days'),
+  ('c0000000-0000-0000-0000-000000000017', '11111111-1111-1111-1111-111111111111', 'aceptado',  '11111111-1111-1111-1111-111111111111', now() - interval '5 days'),
+  ('c0000000-0000-0000-0000-000000000017', '33333333-3333-3333-3333-333333333333', 'aceptado',  '11111111-1111-1111-1111-111111111111', now() - interval '4 days');
 
 -- Private fees (mixed currencies, paid and pending). Past fees are paid on the show date.
 insert into public.show_cobros (show_id, musico_id, importe, moneda, estado_cobro, cobrado_en, notas) values
@@ -244,7 +288,17 @@ from (values
   ('c0000000-0000-0000-0000-000000000003', 'De Música Ligera', 2),
   ('c0000000-0000-0000-0000-000000000003', 'Ji Ji Ji', 3),
   ('c0000000-0000-0000-0000-000000000005', 'Stand By Me', 0),
-  ('c0000000-0000-0000-0000-000000000005', 'Color Esperanza', 1)
+  ('c0000000-0000-0000-0000-000000000005', 'Color Esperanza', 1),
+  ('c0000000-0000-0000-0000-000000000014', 'Hotel California', 0),
+  ('c0000000-0000-0000-0000-000000000014', 'Lamento Boliviano', 1),
+  ('c0000000-0000-0000-0000-000000000014', 'De Música Ligera', 2),
+  ('c0000000-0000-0000-0000-000000000014', 'Stand By Me', 3),
+  ('c0000000-0000-0000-0000-000000000015', 'Billie Jean', 0),
+  ('c0000000-0000-0000-0000-000000000015', 'Another One Bites the Dust', 1),
+  ('c0000000-0000-0000-0000-000000000017', 'Stand By Me', 0),
+  ('c0000000-0000-0000-0000-000000000017', 'De Música Ligera', 1),
+  ('c0000000-0000-0000-0000-000000000017', 'Zombie', 2),
+  ('c0000000-0000-0000-0000-000000000017', 'Imagine', 3)
 ) as s(show_id, titulo, orden)
 join public.canciones k on k.titulo = s.titulo;
 
@@ -253,13 +307,13 @@ do $$
 declare n integer;
 begin
   select count(*) into n from public.shows;
-  if n <> 10 then raise exception 'Seed error: expected 10 shows, got %', n; end if;
+  if n <> 17 then raise exception 'Seed error: expected 17 shows, got %', n; end if;
   select count(*) into n from public.show_musicos;
-  if n <> 23 then raise exception 'Seed error: expected 23 show_musicos rows, got %', n; end if;
+  if n <> 38 then raise exception 'Seed error: expected 38 show_musicos rows, got %', n; end if;
   select count(*) into n from public.show_cobros;
   if n <> 9 then raise exception 'Seed error: expected 9 show_cobros rows, got %', n; end if;
   select count(*) into n from public.show_canciones_tocadas;
-  if n <> 14 then raise exception 'Seed error: expected 14 played-song rows, got %', n; end if;
+  if n <> 24 then raise exception 'Seed error: expected 24 played-song rows, got %', n; end if;
 end
 $$;
 
