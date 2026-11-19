@@ -68,6 +68,8 @@ describe('busqueda', () => {
     expect(sanitizarBusqueda('%%')).toBe('')
     expect(busquedaValida('%%')).toBe(false)
     expect(busquedaValida('a_')).toBe(false)
+    expect(busquedaValida('a')).toBe(false)
+    expect(busquedaValida('')).toBe(false)
   })
   it('accepts real text', () => {
     expect(busquedaValida('So')).toBe(true)
