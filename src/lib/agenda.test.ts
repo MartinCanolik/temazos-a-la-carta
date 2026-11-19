@@ -94,6 +94,9 @@ describe('lineaLugar', () => {
 describe('lineaInvitados', () => {
   it('prefixes the guests or returns null', () => {
     expect(lineaInvitados('Tito (batería)')).toBe('con: Tito (batería)')
+    expect(lineaInvitados('con Tito (batería)')).toBe('con: Tito (batería)')
+    expect(lineaInvitados('Con: Tito')).toBe('con: Tito')
+    expect(lineaInvitados('Concepción')).toBe('con: Concepción')
     expect(lineaInvitados('  ')).toBeNull()
     expect(lineaInvitados(null)).toBeNull()
   })

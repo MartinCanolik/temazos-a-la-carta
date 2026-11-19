@@ -94,7 +94,8 @@ export function lineaLugar(show: Pick<AgendaPublicaFila, 'lugar' | 'ciudad' | 'z
 
 /** "con: Tito (batería)" for the free-text guests of a show, or null. */
 export function lineaInvitados(invitados: string | null): string | null {
-  const t = invitados?.trim()
+  // Musicians often type "con Tito"; don't render "con: con Tito".
+  const t = invitados?.trim().replace(/^con[:\s]+/i, '').trim()
   return t ? `con: ${t}` : null
 }
 
