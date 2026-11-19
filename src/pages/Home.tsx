@@ -28,6 +28,10 @@ export function Home() {
       </div>
       {/* CTA */}
       <div className={styles.cta}>
+        <Link to="/shows" className={`btn-primary ${styles.liveCta}`}>
+          Música en vivo
+        </Link>
+
         <button className="btn-outline" onClick={() => navigate('/repertorio')}>
           Ver repertorio
         </button>

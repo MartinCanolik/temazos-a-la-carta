@@ -450,7 +450,7 @@ export interface UbicacionConShows {
 
 export type PeriodoRanking = 'mes' | 'anio' | 'historico'
 
-export interface RankingArgs {
+export type RankingArgs = {
   p_periodo?: PeriodoRanking
   p_ciudad?: string | null
   p_zona?: string | null
