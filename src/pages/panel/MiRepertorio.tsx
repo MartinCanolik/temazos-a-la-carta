@@ -4,17 +4,19 @@ import {
   useActualizarCancion,
   useAgregarCanciones,
   useBorrarCancion,
+  useBuscarCatalogo,
   useCancionesDe,
+  type NuevaCancion,
 } from '@/hooks/useCancionesMusico'
 import { usePlaylist } from '@/hooks/usePlaylist'
 import { useDebounce } from '@/hooks/useDebounce'
 import { TONALIDADES, claveCancion, normalizarTexto, parsearListaCanciones } from '@/lib/canciones'
-import type { CancionMusico } from '@/lib/database.types'
+import type { CancionCatalogo, CancionMusico } from '@/lib/database.types'
 import { PanelLayout } from './PanelLayout'
 import styles from './panel.module.css'
 
 export function MiRepertorio() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const musicoId = user?.id
   const { data: canciones, isLoading, isError } = useCancionesDe(musicoId)
   const borrar = useBorrarCancion(musicoId)
@@ -44,6 +46,7 @@ export function MiRepertorio() {
       <CancionForm
         key={editando?.id ?? 'nueva'}
         musicoId={musicoId}
+        instrumentosPerfil={profile?.instrumentos ?? []}
         cancion={editando}
         onDone={() => setEditando(null)}
       />
@@ -83,8 +86,9 @@ export function MiRepertorio() {
                 <div className={styles.listMain}>
                   <span className={styles.listTitle}>{c.titulo}</span>
                   <span className={styles.listSub}>{c.artista}</span>
-                  {(c.tonalidad || c.version || c.referencia_url) && (
+                  {(c.tonalidad || c.version || c.instrumento || c.referencia_url) && (
                     <span className={styles.chips}>
+                      {c.instrumento && <span className={styles.chip}>{c.instrumento}</span>}
                       {c.tonalidad && <span className={styles.chip}>{c.tonalidad}</span>}
                       {c.version && <span className={styles.chip}>{c.version}</span>}
                       {c.referencia_url && (
@@ -134,11 +138,13 @@ export function MiRepertorio() {
 
 interface CancionFormProps {
   musicoId: string | undefined
+  /** Instrumentos del perfil: se sugieren para el campo "Instrumento / rol". */
+  instrumentosPerfil: string[]
   cancion: CancionMusico | null
   onDone: () => void
 }
 
-function CancionForm({ musicoId, cancion, onDone }: CancionFormProps) {
+function CancionForm({ musicoId, instrumentosPerfil, cancion, onDone }: CancionFormProps) {
   const agregar = useAgregarCanciones(musicoId)
   const actualizar = useActualizarCancion(musicoId)
 
@@ -148,9 +154,26 @@ function CancionForm({ musicoId, cancion, onDone }: CancionFormProps) {
   const [version, setVersion] = useState(cancion?.version ?? '')
   const [referencia, setReferencia] = useState(cancion?.referencia_url ?? '')
   const [notas, setNotas] = useState(cancion?.notas ?? '')
+  const [instrumento, setInstrumento] = useState(cancion?.instrumento ?? '')
+  // Catalog song picked from the suggestions (carries its Spotify id, if any).
+  const [elegida, setElegida] = useState<CancionCatalogo | null>(null)
+  const [sugerir, setSugerir] = useState(false)
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
 
   const pending = agregar.isPending || actualizar.isPending
+
+  // Suggestions only for new songs, while the user is typing the title.
+  const consulta = useDebounce(titulo, 250)
+  const { data: sugerencias } = useBuscarCatalogo(!cancion && sugerir ? consulta : '')
+  const mostrarSugerencias =
+    !cancion && sugerir && titulo.trim().length >= 2 && (sugerencias?.length ?? 0) > 0
+
+  function elegir(c: CancionCatalogo) {
+    setTitulo(c.titulo)
+    setArtista(c.artista)
+    setElegida(c)
+    setSugerir(false)
+  }
 
   function limpiar() {
     setTitulo('')
@@ -159,6 +182,9 @@ function CancionForm({ musicoId, cancion, onDone }: CancionFormProps) {
     setVersion('')
     setReferencia('')
     setNotas('')
+    setInstrumento('')
+    setElegida(null)
+    setSugerir(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -172,15 +198,23 @@ function CancionForm({ musicoId, cancion, onDone }: CancionFormProps) {
       version: version.trim() || null,
       referencia_url: referencia.trim() || null,
       notas: notas.trim() || null,
+      instrumento: instrumento.trim() || null,
     }
     try {
       if (cancion) {
-        await actualizar.mutateAsync({ id: cancion.id, ...datos })
+        await actualizar.mutateAsync({ actual: cancion, ...datos })
         onDone()
       } else {
-        const { agregadas } = await agregar.mutateAsync([datos])
+        const nueva: NuevaCancion = {
+          ...datos,
+          spotify_track_id:
+            elegida && elegida.titulo === datos.titulo && elegida.artista === datos.artista
+              ? elegida.spotify_track_id
+              : null,
+        }
+        const { agregadas } = await agregar.mutateAsync([nueva])
         if (agregadas === 0) {
-          setMsg({ tipo: 'error', texto: 'Esa canción ya está en tu repertorio.' })
+          setMsg({ tipo: 'error', texto: 'Ya tenés este tema en tu repertorio.' })
           return
         }
         setMsg({ tipo: 'ok', texto: `"${datos.titulo}" agregada.` })
@@ -206,7 +240,14 @@ function CancionForm({ musicoId, cancion, onDone }: CancionFormProps) {
             value={titulo}
             maxLength={200}
             required
-            onChange={(e) => setTitulo(e.target.value)}
+            autoComplete="off"
+            aria-expanded={mostrarSugerencias}
+            aria-controls="c-sugerencias"
+            onChange={(e) => {
+              setTitulo(e.target.value)
+              setElegida(null)
+              setSugerir(true)
+            }}
           />
         </div>
         <div className={styles.field}>
@@ -223,6 +264,26 @@ function CancionForm({ musicoId, cancion, onDone }: CancionFormProps) {
           />
         </div>
       </div>
+
+      {mostrarSugerencias && (
+        <div id="c-sugerencias" role="group" aria-label="Canciones del catálogo">
+          <p className={styles.cardMuted}>Ya están en el catálogo, tocá una para completar:</p>
+          <ul className={styles.list}>
+            {sugerencias!.map((c) => (
+              <li key={c.id} className={styles.listItem}>
+                <button
+                  type="button"
+                  className={styles.btnLink}
+                  style={{ textAlign: 'left', width: '100%' }}
+                  onClick={() => elegir(c)}
+                >
+                  {c.titulo} — {c.artista}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className={styles.row}>
         <div className={styles.field} style={{ flex: '0 0 7rem' }}>
@@ -256,6 +317,26 @@ function CancionForm({ musicoId, cancion, onDone }: CancionFormProps) {
             onChange={(e) => setVersion(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="c-instrumento">
+          Instrumento / rol
+        </label>
+        <input
+          id="c-instrumento"
+          className="input-field"
+          list="c-instrumentos"
+          placeholder="Voz, guitarra, bajo…"
+          value={instrumento}
+          maxLength={60}
+          onChange={(e) => setInstrumento(e.target.value)}
+        />
+        <datalist id="c-instrumentos">
+          {instrumentosPerfil.map((i) => (
+            <option key={i} value={i} />
+          ))}
+        </datalist>
       </div>
 
       <div className={styles.field}>
@@ -331,13 +412,13 @@ function ImportarCanciones({ musicoId }: { musicoId: string | undefined }) {
 
   const parseadas = useMemo(() => parsearListaCanciones(texto), [texto])
 
-  async function importar(filas: { titulo: string; artista: string; spotify_track_id?: string }[]) {
+  async function importar(filas: NuevaCancion[]) {
     setMsg(null)
     try {
       const { agregadas, repetidas } = await agregar.mutateAsync(filas)
       setMsg(
         `Listo: ${agregadas} ${agregadas === 1 ? 'canción agregada' : 'canciones agregadas'}` +
-          (repetidas ? ` (${repetidas} ya estaban).` : '.'),
+          (repetidas ? ` (${repetidas} ya ${repetidas === 1 ? 'estaba' : 'estaban'} en tu repertorio).` : '.'),
       )
       setTexto('')
       setSeleccion(new Set())
