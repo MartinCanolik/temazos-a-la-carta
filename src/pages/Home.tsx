@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import styles from './Home.module.css'
 import { Navbar } from '@/components/Navbar'
 import { CONTRATANOS_URL } from '@/lib/contacto'
@@ -45,6 +45,11 @@ export function Home() {
           <span>Contratanos</span>
         </a>
       </div>
+
+      {/* Acceso discreto al área de músicos */}
+      <Link to="/panel" className={styles.musicosLink}>
+        Soy músico
+      </Link>
     </div>
   )
 }

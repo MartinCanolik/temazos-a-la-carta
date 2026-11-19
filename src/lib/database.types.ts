@@ -31,6 +31,27 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['pedidos']['Insert']>
         Relationships: []
       }
+      profiles: {
+        Row: {
+          id: string
+          role: Rol
+          nombre: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          role?: Rol
+          nombre?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        /** El cliente sólo puede editar columnas de perfil (nunca `role`). */
+        Update: {
+          nombre?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -40,3 +61,6 @@ export type Database = {
 
 export type Pedido = Database['public']['Tables']['pedidos']['Row']
 export type PedidoInsert = Database['public']['Tables']['pedidos']['Insert']
+
+export type Rol = 'musico' | 'admin'
+export type Profile = Database['public']['Tables']['profiles']['Row']

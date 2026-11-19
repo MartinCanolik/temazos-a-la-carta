@@ -5,6 +5,10 @@ import { Home } from '@/pages/Home'
 import { Donaciones } from '@/pages/Donaciones'
 import { Repertorio } from '@/pages/Repertorio'
 import { Pedidos } from '@/pages/Pedidos'
+import { Login } from '@/pages/Login'
+import { PanelHome } from '@/pages/panel/PanelHome'
+import { AuthProvider } from '@/auth/AuthProvider'
+import { RequireMusico } from '@/auth/RequireMusico'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,16 +22,29 @@ const queryClient = new QueryClient({
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/donaciones" element={<Donaciones />} />
-            <Route path="/repertorio" element={<Repertorio />} />
-            <Route path="/pedidos" element={<Pedidos />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/donaciones" element={<Donaciones />} />
+              <Route path="/repertorio" element={<Repertorio />} />
+              <Route path="/pedidos" element={<Pedidos />} />
+
+              {/* Área de músicos */}
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/panel"
+                element={
+                  <RequireMusico>
+                    <PanelHome />
+                  </RequireMusico>
+                }
+              />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }
