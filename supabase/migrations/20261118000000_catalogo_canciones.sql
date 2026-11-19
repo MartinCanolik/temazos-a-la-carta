@@ -201,6 +201,7 @@ begin
            first_value(id) over w as keep_id,
            row_number() over w as rn
     from musico_canciones
+    where cancion_id is not null
     window w as (partition by musico_id, cancion_id order by created_at, id)
   ) x
   where rn > 1;
@@ -231,6 +232,14 @@ begin
 
   delete from musico_canciones m using _mc_dup d where m.id = d.dup_id;
   drop table _mc_dup;
+end
+$$;
+
+do $$
+begin
+  if exists (select 1 from public.musico_canciones where cancion_id is null) then
+    raise exception 'musico_canciones rows without cancion_id remain after the backfill';
+  end if;
 end
 $$;
 
