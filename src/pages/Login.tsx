@@ -34,7 +34,7 @@ export function Login() {
         <h1 className={styles.title}>Entrá a tu panel</h1>
       </div>
       <p className={styles.subtitle}>
-        Cargá tu perfil, las canciones que tocás y registrá tus toques. Compartí tu perfil con
+        Cargá tu perfil, las canciones que tocás y registrá tus shows. Compartí tu perfil con
         otros músicos y mirá qué temas tienen en común.
       </p>
 
