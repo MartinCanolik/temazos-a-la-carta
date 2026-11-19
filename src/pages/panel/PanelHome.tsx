@@ -4,17 +4,8 @@ import { useAuth } from '@/auth/authContext'
 import { useMisCobros, useShows, useTocadasDeMisShows } from '@/hooks/useShows'
 import { useCancionesDe } from '@/hooks/useCancionesMusico'
 import { usePedidosCount } from '@/hooks/usePedidos'
-import {
-  dividirAgenda,
-  esDelMes,
-  formatearFecha,
-  formatearHora,
-  formatearTotales,
-  hoyISO,
-  masTocadas,
-  miEstado,
-  totalesPorMoneda,
-} from '@/lib/shows'
+import { calcularEstadisticas } from '@/lib/estadisticas'
+import { dividirAgenda, formatearFecha, formatearHora, formatearTotales, hoyISO, miEstado } from '@/lib/shows'
 import { PanelLayout } from './PanelLayout'
 import styles from './panel.module.css'
 
@@ -45,13 +36,19 @@ export function PanelHome() {
     {
       to: '/panel/shows',
       icon: '📅',
-      title: 'Mis shows',
+      title: 'Shows',
       text: 'Agenda compartida, invitaciones, cobros y temas tocados.',
+    },
+    {
+      to: '/panel/estadisticas',
+      icon: '📊',
+      title: 'Tus números',
+      text: 'Shows, lugares, temas y plata por período.',
     },
     {
       to: '/panel/repertorio',
       icon: '🎼',
-      title: 'Mi repertorio',
+      title: 'Mis canciones',
       text: 'Las canciones que tocás y tu versión.',
     },
     {
@@ -134,35 +131,19 @@ function Resumen({ musicoId }: { musicoId: string | undefined }) {
 
   const datos = useMemo(() => {
     const hoy = hoyISO()
+    const entrada = { shows: shows ?? [], miId: musicoId, cobros: cobros ?? new Map(), tocadas: tocadas ?? [], hoy }
     // Only shows I accepted count: pending and declined invitations are left out.
-    const aceptados = (shows ?? []).filter((s) => miEstado(s, musicoId) === 'aceptado')
+    const aceptados = entrada.shows.filter((s) => miEstado(s, musicoId) === 'aceptado')
     const { proximos } = dividirAgenda(aceptados, musicoId, hoy)
-    const delMes = aceptados.filter((s) => s.estado === 'realizado' && esDelMes(s.fecha, hoy))
-
-    // My own fees for this month's shows, never mixing currencies.
-    const cobrosDelMes = aceptados
-      .filter((s) => s.estado !== 'cancelado' && esDelMes(s.fecha, hoy))
-      .map((s) => cobros?.get(s.id))
-      .filter((c): c is NonNullable<typeof c> => !!c)
-    const cobrado = totalesPorMoneda(cobrosDelMes.filter((c) => c.estado_cobro === 'cobrado'))
-    const pendiente = totalesPorMoneda(cobrosDelMes.filter((c) => c.estado_cobro === 'pendiente'))
-
-    // Most played songs: only the confirmed songs of shows I accepted.
-    const idsAceptados = new Set(aceptados.map((s) => s.id))
-    const propias = (tocadas ?? []).filter((t) => idsAceptados.has(t.show_id))
-    const porId = new Map(propias.map((t) => [t.cancion_id, t]))
-    const topCanciones = masTocadas(
-      propias.map((t) => t.cancion_id),
-      5,
-    ).map(({ cancion_id, veces }) => ({ cancion: porId.get(cancion_id)!, veces }))
-
-    return { proximo: proximos[0], delMes, cobrado, pendiente, topCanciones }
+    const mes = calcularEstadisticas({ ...entrada, periodo: 'este-mes' })
+    const historico = calcularEstadisticas({ ...entrada, periodo: 'historico' })
+    return { proximo: proximos[0], mes, topCanciones: historico.temas.slice(0, 5) }
   }, [shows, cobros, tocadas, musicoId])
 
   if (!shows) return null
 
-  const cobradoTexto = formatearTotales(datos.cobrado)
-  const hayPendiente = Object.keys(datos.pendiente).length > 0
+  const cobradoTexto = formatearTotales(datos.mes.plata.cobrado)
+  const hayPendiente = Object.keys(datos.mes.plata.pendiente).length > 0
 
   return (
     <>
@@ -192,7 +173,7 @@ function Resumen({ musicoId }: { musicoId: string | undefined }) {
 
       <div className={styles.stats}>
         <div className={styles.stat}>
-          <span className={styles.statValue}>{datos.delMes.length}</span>
+          <span className={styles.statValue}>{datos.mes.realizados}</span>
           <span className={styles.statLabel}>shows este mes</span>
         </div>
         <div className={styles.stat}>
@@ -200,7 +181,7 @@ function Resumen({ musicoId }: { musicoId: string | undefined }) {
             {cobradoTexto}
           </span>
           <span className={styles.statLabel}>
-            cobrado este mes{hayPendiente && ` · ${formatearTotales(datos.pendiente)} a cobrar`}
+            cobrado este mes{hayPendiente && ` · ${formatearTotales(datos.mes.plata.pendiente)} a cobrar`}
           </span>
         </div>
         <div className={styles.stat}>
@@ -215,14 +196,14 @@ function Resumen({ musicoId }: { musicoId: string | undefined }) {
             🔥 Las que más tocás
           </h2>
           <ol className={styles.list}>
-            {datos.topCanciones.map(({ cancion, veces }) => (
-              <li key={cancion.cancion_id} className={styles.listItem}>
+            {datos.topCanciones.map((t) => (
+              <li key={t.cancion_id} className={styles.listItem}>
                 <div className={styles.listMain}>
-                  <span className={styles.listTitle}>{cancion.titulo}</span>
-                  <span className={styles.listSub}>{cancion.artista}</span>
+                  <span className={styles.listTitle}>{t.titulo}</span>
+                  <span className={styles.listSub}>{t.artista}</span>
                 </div>
                 <span className={styles.chip}>
-                  {veces} {veces === 1 ? 'vez' : 'veces'}
+                  {t.shows} {t.shows === 1 ? 'show' : 'shows'}
                 </span>
               </li>
             ))}

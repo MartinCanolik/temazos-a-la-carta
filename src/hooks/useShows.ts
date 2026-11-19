@@ -216,6 +216,28 @@ export function useBorrarShow() {
   })
 }
 
+/**
+ * Marks MY fee as collected (RLS: owner-only direct update, no RPC needed). Zero affected rows means
+ * the fee is gone or I am no longer an accepted participant, so it is reported instead of ignored.
+ */
+export function useMarcarCobrado() {
+  const { user } = useAuth()
+  const invalidar = useInvalidarShows()
+  return useMutation({
+    mutationFn: async ({ showId, hoy }: { showId: string; hoy: string }) => {
+      const { data, error } = await supabase
+        .from('show_cobros')
+        .update({ estado_cobro: 'cobrado', cobrado_en: hoy })
+        .eq('show_id', showId)
+        .eq('musico_id', user!.id)
+        .select('show_id')
+      if (error) throw error
+      if (!data || data.length === 0) throw new Error('No se pudo marcar como cobrado.')
+    },
+    onSuccess: (_d, { showId }) => invalidar(showId),
+  })
+}
+
 export function useConfirmarTocadas() {
   const invalidar = useInvalidarShows()
   return useMutation({
