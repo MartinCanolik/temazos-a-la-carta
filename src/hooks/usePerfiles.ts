@@ -18,3 +18,40 @@ export function usePerfilPublico(slug: string | undefined) {
     },
   })
 }
+
+/** Perfiles públicos (con slug) para los slugs pedidos; los que no existen simplemente no vienen. */
+export function usePerfilesPorSlug(slugs: string[]) {
+  const clave = [...slugs].sort().join(',')
+  return useQuery({
+    queryKey: ['perfiles-por-slug', clave],
+    enabled: slugs.length > 0,
+    queryFn: async (): Promise<Profile[]> => {
+      const { data, error } = await supabase.from('profiles').select('*').in('slug', slugs)
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+/** Busca perfiles públicos por nombre o slug (máx. 8). Pide 1 extra por si hay que excluir al propio. */
+export function useBuscarPerfiles(texto: string, excluirId?: string) {
+  const q = texto.trim()
+  return useQuery({
+    queryKey: ['perfiles-buscar', q, excluirId],
+    enabled: q.length >= 2,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Profile[]> => {
+      // Characters that would break PostgREST's or() syntax or act as ilike wildcards.
+      const seguro = q.replace(/[,()%*_\\"]/g, ' ').trim()
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .not('slug', 'is', null)
+        .or(`nombre.ilike.%${seguro}%,slug.ilike.%${seguro}%`)
+        .order('nombre', { ascending: true })
+        .limit(9)
+      if (error) throw error
+      return (data ?? []).filter((p) => p.id !== excluirId).slice(0, 8)
+    },
+  })
+}
