@@ -264,9 +264,12 @@ stable
 security definer
 set search_path = public
 as $$
+  -- Only zones with PUBLIC realizado shows are offered as filters: listing a zone that
+  -- only has private shows would reveal where (and, by filtering, who) played privately.
   select s.ciudad, s.zona, count(*)::integer
   from public.shows s
   where s.estado = 'realizado'
+    and s.visibilidad = 'publico'
     and (s.ciudad is not null or s.zona is not null)
   group by s.ciudad, s.zona
   order by s.ciudad nulls last, s.zona nulls last;
