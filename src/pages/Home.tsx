@@ -28,6 +28,10 @@ export function Home() {
       </div>
       {/* CTA */}
       <div className={styles.cta}>
+        <Link to="/shows" className={`btn-primary ${styles.liveCta}`}>
+          Música en vivo
+        </Link>
+
         <button className="btn-outline" onClick={() => navigate('/repertorio')}>
           Ver repertorio
         </button>
@@ -45,6 +49,10 @@ export function Home() {
           <span>Contratanos</span>
         </a>
       </div>
+
+      <Link to="/rankings" className={styles.musicosLink}>
+        Rankings de la comunidad
+      </Link>
 
       {/* Acceso discreto al área de músicos */}
       <Link to="/panel" className={styles.musicosLink}>

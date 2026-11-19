@@ -112,6 +112,11 @@
   min-width: 200px;
 }
 
+/* ── Música en vivo (acceso destacado) ── */
+.liveCta {
+  min-width: 200px;
+}
+
 /* ── Contratanos (WhatsApp) ── */
 .contratanos {
   display: inline-flex;
