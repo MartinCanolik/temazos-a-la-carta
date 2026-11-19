@@ -150,6 +150,53 @@ begin
 end
 $$;
 
+-- Standalone setlists built for a lineup (history for "últimos repertorios")
+insert into public.repertorios (id, creado_por, nombre, notas, basado_en, created_at, updated_at) values
+  ('b0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Dúo Ana y Bruno · bares', 'Dos sets de 45 minutos.', null, now() - interval '12 days', now() - interval '5 days'),
+  ('b0000000-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333333', 'Casamiento Fernández · trío', 'Entrada, cena y baile.', null, now() - interval '9 days', now() - interval '2 days'),
+  ('b0000000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'Rock clásico', null, null, now() - interval '70 days', now() - interval '60 days');
+
+insert into public.repertorio_musicos (repertorio_id, musico_id) values
+  ('b0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111'),
+  ('b0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222'),
+  ('b0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111'),
+  ('b0000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222'),
+  ('b0000000-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333333'),
+  ('b0000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111'),
+  ('b0000000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222');
+
+insert into public.repertorio_canciones (repertorio_id, cancion_id, orden, a_preparar, notas)
+select s.repertorio_id::uuid, k.id, s.orden, s.a_preparar, s.notas
+from (values
+  ('b0000000-0000-0000-0000-000000000001', 'De Música Ligera', 0, false, null),
+  ('b0000000-0000-0000-0000-000000000001', 'Persiana Americana', 1, false, null),
+  ('b0000000-0000-0000-0000-000000000001', 'Lamento Boliviano', 2, false, null),
+  ('b0000000-0000-0000-0000-000000000001', 'Hotel California', 3, false, 'Cierre del primer set'),
+  ('b0000000-0000-0000-0000-000000000001', 'Zombie', 4, true, 'Bruno todavía no la sacó'),
+  ('b0000000-0000-0000-0000-000000000002', 'Stand By Me', 0, false, null),
+  ('b0000000-0000-0000-0000-000000000002', 'Rolling in the Deep', 1, false, null),
+  ('b0000000-0000-0000-0000-000000000002', 'De Música Ligera', 2, false, null),
+  ('b0000000-0000-0000-0000-000000000002', 'Hotel California', 3, true, 'Ensayar el solo final'),
+  ('b0000000-0000-0000-0000-000000000002', 'Let It Be', 4, false, null),
+  ('b0000000-0000-0000-0000-000000000002', 'Imagine', 5, true, null),
+  ('b0000000-0000-0000-0000-000000000003', 'Another One Bites the Dust', 0, false, null),
+  ('b0000000-0000-0000-0000-000000000003', 'Billie Jean', 1, false, null),
+  ('b0000000-0000-0000-0000-000000000003', 'Sweet Child O'' Mine', 2, true, null),
+  ('b0000000-0000-0000-0000-000000000003', 'Ji Ji Ji', 3, false, null)
+) as s(repertorio_id, titulo, orden, a_preparar, notas)
+join public.canciones k on k.titulo = s.titulo;
+
+-- Fail loudly if a title typo silently dropped setlist rows.
+do $$
+declare n integer;
+begin
+  select count(*) into n from public.repertorio_canciones;
+  if n <> 15 then
+    raise exception 'Seed error: expected 15 repertorio rows, got %', n;
+  end if;
+end
+$$;
+
 -- Song requests (device limit trigger: max 2 per device_id)
 insert into public.pedidos (track_id, track_name, artist_name, album_image, requester, device_id, wants_to_sing, created_at) values
   ('seed-track-001', 'De Música Ligera', 'Soda Stereo', null, 'Martín', 'seed-device-a', true,  now() - interval '40 minutes'),

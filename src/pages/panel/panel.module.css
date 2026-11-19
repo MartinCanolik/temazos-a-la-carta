@@ -413,3 +413,99 @@
   font-size: var(--text-sm);
   color: rgba(0, 0, 0, 0.55);
 }
+
+/* ── Repertorios (setlists) ── */
+.setlistRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.setlistRow:last-child {
+  border-bottom: none;
+}
+
+.setlistHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.setlistNum {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-red);
+  min-width: 1.5rem;
+}
+
+.setlistActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.iconBtn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-red);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iconBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.toggleBtn {
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-red);
+  background: none;
+  color: var(--color-red);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toggleBtn[aria-pressed='true'] {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.55rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badgeOk {
+  background: rgba(29, 122, 58, 0.12);
+  color: #1d7a3a;
+}
+
+.badgePrep {
+  background: rgba(176, 106, 0, 0.14);
+  color: #8a5200;
+}
+
+.badgeFalta {
+  background: rgba(139, 26, 26, 0.12);
+  color: var(--color-red);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
