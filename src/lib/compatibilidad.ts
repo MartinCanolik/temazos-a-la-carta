@@ -104,13 +104,15 @@ export function analizarFormacion(musicos: MusicoFormacion[]): AnalisisFormacion
     }
   }
 
-  const canciones = [...porCancion.values()].sort(porCantidadYTitulo)
+  const canciones = [...porCancion.values()]
   for (const c of canciones) {
     c.cantidad = c.conocen.length
     c.porcentaje = total === 0 ? 0 : Math.round((c.cantidad / total) * 100)
     c.todos = total > 0 && c.cantidad === total
     c.tonalidadesDistintas = new Set(c.conocen.map((k) => k.tonalidad).filter(Boolean)).size > 1
   }
+  // Sort only after the counts are known.
+  canciones.sort(porCantidadYTitulo)
 
   return {
     total,

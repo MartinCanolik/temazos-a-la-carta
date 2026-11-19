@@ -73,6 +73,16 @@ describe('analizarFormacion', () => {
     expect(analisis.parcial.map((c) => c.titulo)).toEqual(['Bolero', 'Cumbia', 'Rock'])
   })
 
+  it('puts songs known by more musicians first even when alphabetically later', () => {
+    const cancion = (id: string, titulo: string) => ({ cancion_id: id, titulo, artista: 'X' })
+    const r = analizarFormacion([
+      { id: 'a', nombre: 'A', canciones: [cancion('z', 'Zamba'), cancion('b', 'Arroró')] },
+      { id: 'b', nombre: 'B', canciones: [cancion('z', 'Zamba')] },
+      { id: 'c', nombre: 'C', canciones: [] },
+    ])
+    expect(r.parcial.map((c) => c.titulo)).toEqual(['Zamba', 'Arroró'])
+  })
+
   it('reports who knows each song and the percentage', () => {
     const zamba = analisis.todos[0]
     expect(zamba.cantidad).toBe(3)
