@@ -20,6 +20,7 @@ import { GestionCola } from '@/pages/panel/GestionCola'
 import { PerfilPublico } from '@/pages/PerfilPublico'
 import { MusicaEnVivo } from '@/pages/MusicaEnVivo'
 import { ShowPublico } from '@/pages/ShowPublico'
+import { Rankings } from '@/pages/Rankings'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { RequireMusico } from '@/auth/RequireMusico'
 
@@ -45,6 +46,7 @@ export function App() {
               <Route path="/pedidos" element={<Pedidos />} />
               <Route path="/shows" element={<MusicaEnVivo />} />
               <Route path="/shows/:id" element={<ShowPublico />} />
+              <Route path="/rankings" element={<Rankings />} />
 
               {/* Área de músicos */}
               <Route path="/login" element={<Login />} />

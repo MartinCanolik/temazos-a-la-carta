@@ -50,6 +50,10 @@ export function Home() {
         </a>
       </div>
 
+      <Link to="/rankings" className={styles.musicosLink}>
+        Rankings de la comunidad
+      </Link>
+
       {/* Acceso discreto al área de músicos */}
       <Link to="/panel" className={styles.musicosLink}>
         Soy músico

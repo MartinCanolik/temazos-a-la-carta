@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { SelectUbicacion } from '@/components/SelectUbicacion'
 import { TarjetaShow } from '@/components/TarjetaShow'
 import cardStyles from '@/components/TarjetaShow.module.css'
@@ -83,6 +84,10 @@ export function MusicaEnVivo() {
           </ul>
         </section>
       ))}
+
+      <div className={cardStyles.crossLinks}>
+        <Link to="/rankings">Rankings de la comunidad</Link>
+      </div>
     </PanelLayout>
   )
 }
