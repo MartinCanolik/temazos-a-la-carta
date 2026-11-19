@@ -28,6 +28,13 @@ describe('claveCancion', () => {
       claveCancion('DE MUSICA LIGERA (En vivo)', 'soda stereo'),
     )
   })
+
+  it('tells different songs apart', () => {
+    expect(claveCancion('Persiana Americana', 'Soda Stereo')).not.toBe(
+      claveCancion('De Música Ligera', 'Soda Stereo'),
+    )
+    expect(claveCancion('Zombie', 'The Cranberries')).not.toBe(claveCancion('Zombie', 'Bad Wolves'))
+  })
 })
 
 describe('parsearListaCanciones', () => {
@@ -62,6 +69,31 @@ describe('compararRepertorios', () => {
     const r = compararRepertorios([mias[0], { ...mias[0] }], [suyas[0]])
     expect(r.enComun).toHaveLength(1)
     expect(r.soloMias).toHaveLength(1)
+  })
+})
+
+describe('compararRepertorios by catalog id', () => {
+  it('matches by cancion_id even when the spelling differs', () => {
+    const mias = [{ titulo: 'Zombie', artista: 'The Cranberries', cancion_id: 'c1' }]
+    const suyas = [{ titulo: 'Zombi', artista: 'Cranberries', cancion_id: 'c1' }]
+    expect(compararRepertorios(mias, suyas).enComun).toHaveLength(1)
+  })
+
+  it('prefers the exact catalog match over a fuzzy one', () => {
+    const mias = [{ titulo: 'Hotel California', artista: 'Eagles', cancion_id: 'c1' }]
+    const fuzzy = { titulo: 'Hotel California', artista: 'Eagles', cancion_id: 'c2' }
+    const exacta = { titulo: 'Hotel California (Live)', artista: 'Eagles', cancion_id: 'c1' }
+    const r = compararRepertorios(mias, [fuzzy, exacta])
+    expect(r.enComun[0].suya).toBe(exacta)
+    expect(r.soloSuyas).toEqual([fuzzy])
+  })
+
+  it('falls back to the normalized key when ids are missing', () => {
+    const r = compararRepertorios(
+      [{ titulo: 'Imagine', artista: 'John Lennon' }],
+      [{ titulo: 'IMAGINE', artista: 'john lennon', cancion_id: 'c9' }],
+    )
+    expect(r.enComun).toHaveLength(1)
   })
 })
 
