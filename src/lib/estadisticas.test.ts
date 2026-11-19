@@ -361,3 +361,42 @@ describe('anchoBarra', () => {
     expect(anchoBarra(0, 0)).toBe(0)
   })
 })
+
+describe('panel summary semantics (este-mes + histórico)', () => {
+  const confirmado = { canciones_confirmadas_en: '2026-02-01T00:00:00Z' }
+
+  it('collected this month follows cobrado_en, not the show date', () => {
+    const shows = [show('vieja', '2026-09-10'), show('reciente', '2026-11-03')]
+    const cobros = {
+      vieja: cobro(500, 'UYU', 'cobrado', '2026-11-05'), // played in September, collected this month
+      reciente: cobro(700, 'UYU', 'cobrado', '2026-10-30'), // played this month, collected last month
+    }
+    expect(stats(shows, { cobros, periodo: 'este-mes' }).plata.cobrado).toEqual({ UYU: 500 })
+  })
+
+  it('"a cobrar" counts played shows only, never scheduled ones', () => {
+    const shows = [show('hecho', '2026-11-01'), show('futuro', '2026-11-25', { estado: 'programado' })]
+    const cobros = { hecho: cobro(300, 'UYU', 'pendiente'), futuro: cobro(900, 'UYU', 'pendiente') }
+    const { plata } = stats(shows, { cobros, periodo: 'este-mes' })
+    expect(plata.pendiente).toEqual({ UYU: 300 })
+    expect(plata.previsto).toEqual({ UYU: 900 })
+  })
+
+  it('top songs count once per played show with confirmed songs', () => {
+    const shows = [
+      show('1', '2026-03-01', confirmado),
+      show('2', '2026-04-01', confirmado),
+      show('3', '2026-05-01'), // songs never confirmed
+      show('4', '2026-12-01', { ...confirmado, estado: 'programado' }),
+    ]
+    const tocadas = [
+      tocada('1', 'x'),
+      tocada('1', 'x'),
+      tocada('2', 'x'),
+      tocada('3', 'x'),
+      tocada('4', 'x'),
+    ]
+    const { temas } = stats(shows, { tocadas, periodo: 'historico' })
+    expect(temas.map((t) => [t.cancion_id, t.shows])).toEqual([['x', 2]])
+  })
+})

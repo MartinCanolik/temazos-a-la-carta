@@ -8,6 +8,7 @@ import {
   esDelMes,
   etiquetaEstado,
   formatearPlata,
+  payloadCobrado,
   formatearTotales,
   etiquetaParticipacion,
   explicarVisibilidad,
@@ -285,5 +286,11 @@ describe('formatearPlata', () => {
   it('joins per-currency totals without mixing them', () => {
     // Order follows MONEDAS (UYU, USD, ARS).
     expect(formatearTotales({ ARS: 1000, USD: 20 })).toBe('USD 20 + ARS 1.000')
+  })
+})
+
+describe('payloadCobrado', () => {
+  it('marks the fee as collected on the given day and touches nothing else', () => {
+    expect(payloadCobrado('2026-11-18')).toEqual({ estado_cobro: 'cobrado', cobrado_en: '2026-11-18' })
   })
 })
