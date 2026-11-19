@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   MAX_OTROS,
+  agregarSlug,
   busquedaValida,
   derivarFormacion,
+  formacionLlena,
+  guardadosPendientes,
+  idsParaGuardar,
   parsearSlugs,
   sanitizarBusqueda,
   type Miembro,
@@ -68,5 +72,46 @@ describe('busqueda', () => {
   it('accepts real text', () => {
     expect(busquedaValida('So')).toBe(true)
     expect(sanitizarBusqueda(' Soda,Stereo ')).toBe('Soda Stereo')
+  })
+})
+
+describe('formacionLlena / agregarSlug', () => {
+  const siete = Array.from({ length: MAX_OTROS }, (_, i) => `m${i}`)
+  it('is full by raw slugs even when some do not resolve', () => {
+    expect(formacionLlena(siete, 3)).toBe(true)
+    expect(formacionLlena(siete.slice(0, 3), 3)).toBe(false)
+  })
+  it('does not add past the cap, so an 8th slug is never silently dropped by parsearSlugs', () => {
+    expect(agregarSlug(siete, 'extra')).toBe(siete)
+    const seis = siete.slice(0, 6)
+    const siguiente = agregarSlug(seis, 'extra')
+    expect(siguiente).toHaveLength(MAX_OTROS)
+    expect(parsearSlugs(siguiente.join(','))).toEqual(siguiente)
+  })
+  it('ignores duplicates and the own slug', () => {
+    expect(agregarSlug(['a'], 'a')).toEqual(['a'])
+    expect(agregarSlug(['a'], 'ana', 'ana')).toEqual(['a'])
+  })
+})
+
+describe('idsParaGuardar', () => {
+  it('keeps stored members that are not selected yet (URL not seeded) and those without a slug', () => {
+    expect(idsParaGuardar('u1', ['u1', 'u2', 'u3'], [])).toEqual(['u1', 'u2', 'u3'])
+  })
+  it('unions stored and selected without duplicates, viewer first', () => {
+    expect(idsParaGuardar('u1', ['u2'], ['u2', 'u4'])).toEqual(['u1', 'u2', 'u4'])
+  })
+  it('drops explicit removals but lets a re-added member win', () => {
+    expect(idsParaGuardar('u1', ['u2', 'u3'], [], ['u3'])).toEqual(['u1', 'u2'])
+    expect(idsParaGuardar('u1', ['u2', 'u3'], ['u3'], ['u3'])).toEqual(['u1', 'u2', 'u3'])
+  })
+  it('works without a session', () => {
+    expect(idsParaGuardar(undefined, ['u2'], ['u3'])).toEqual(['u2', 'u3'])
+  })
+})
+
+describe('guardadosPendientes', () => {
+  it('lists stored members missing from the selection, excluding me and removed ones', () => {
+    expect(guardadosPendientes('u1', ['u1', 'u2', 'u3', 'u4'], ['u2'], ['u4'])).toEqual(['u3'])
   })
 })
