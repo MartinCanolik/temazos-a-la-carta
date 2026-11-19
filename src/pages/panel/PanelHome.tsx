@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/authContext'
+import { useRedMusicos } from '@/hooks/useRedMusicos'
 import { useMisCobros, useShows, useTocadasDeMisShows } from '@/hooks/useShows'
 import { useCancionesDe } from '@/hooks/useCancionesMusico'
 import { usePedidosCount } from '@/hooks/usePedidos'
@@ -22,6 +23,7 @@ export function PanelHome() {
   const nombre = profile?.nombre ?? user?.email?.split('@')[0] ?? 'músico'
   const perfilCompleto = !!profile?.slug
   const enCola = usePedidosCount()
+  const redMusicos = useRedMusicos()
 
   const accesos: Acceso[] = []
   if (isAdmin) {
@@ -32,37 +34,45 @@ export function PanelHome() {
       text: enCola > 0 ? `${enCola} en cola ahora. Marcá las que ya sonaron.` : 'La cola está vacía.',
     })
   }
+  if (redMusicos) {
+    accesos.push(
+      {
+        to: '/panel/shows',
+        icon: '📅',
+        title: 'Shows',
+        text: 'Agenda compartida, invitaciones, cobros y temas tocados.',
+      },
+      {
+        to: '/panel/estadisticas',
+        icon: '📊',
+        title: 'Tus números',
+        text: 'Shows, lugares, temas y plata por período.',
+      },
+    )
+  }
+  accesos.push({
+    to: '/panel/repertorio',
+    icon: '🎼',
+    title: 'Mis canciones',
+    text: 'Las canciones que tocás y tu versión.',
+  })
+  if (redMusicos) {
+    accesos.push(
+      {
+        to: '/panel/repertorios',
+        icon: '📋',
+        title: 'Repertorios',
+        text: 'Armá el setlist con tu formación y reusá los anteriores.',
+      },
+      {
+        to: '/panel/formacion',
+        icon: '🎤',
+        title: 'Formación',
+        text: 'Qué saben todos y qué hay que ensayar.',
+      },
+    )
+  }
   accesos.push(
-    {
-      to: '/panel/shows',
-      icon: '📅',
-      title: 'Shows',
-      text: 'Agenda compartida, invitaciones, cobros y temas tocados.',
-    },
-    {
-      to: '/panel/estadisticas',
-      icon: '📊',
-      title: 'Tus números',
-      text: 'Shows, lugares, temas y plata por período.',
-    },
-    {
-      to: '/panel/repertorio',
-      icon: '🎼',
-      title: 'Mis canciones',
-      text: 'Las canciones que tocás y tu versión.',
-    },
-    {
-      to: '/panel/repertorios',
-      icon: '📋',
-      title: 'Repertorios',
-      text: 'Armá el setlist con tu formación y reusá los anteriores.',
-    },
-    {
-      to: '/panel/formacion',
-      icon: '🎤',
-      title: 'Formación',
-      text: 'Qué saben todos y qué hay que ensayar.',
-    },
     {
       to: '/panel/comparar',
       icon: '🤝',
@@ -104,7 +114,7 @@ export function PanelHome() {
         </div>
       )}
 
-      <Resumen musicoId={user?.id} />
+      {redMusicos ? <Resumen musicoId={user?.id} /> : <ResumenBasico musicoId={user?.id} />}
 
       <nav className={styles.tiles} aria-label="Secciones del panel">
         {accesos.map((a) => (
@@ -121,6 +131,18 @@ export function PanelHome() {
   )
 }
 
+/** Summary without the musician network: only how many songs the musician has. */
+function ResumenBasico({ musicoId }: { musicoId: string | undefined }) {
+  const { data: canciones } = useCancionesDe(musicoId)
+  return (
+    <div className={styles.stats}>
+      <div className={styles.stat}>
+        <span className={styles.statValue}>{canciones?.length ?? 0}</span>
+        <span className={styles.statLabel}>canciones</span>
+      </div>
+    </div>
+  )
+}
 
 /** Estadísticas: próximo show, shows y plata del mes, repertorio y canciones más tocadas. */
 function Resumen({ musicoId }: { musicoId: string | undefined }) {
