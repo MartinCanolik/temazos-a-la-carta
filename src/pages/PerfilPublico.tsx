@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { usePerfilPublico } from '@/hooks/usePerfiles'
 import { useCancionesDe } from '@/hooks/useCancionesMusico'
 import { useAuth } from '@/auth/authContext'
+import { useRedMusicos } from '@/hooks/useRedMusicos'
 import { instagramUrl, perfilUrl, whatsappUrl } from '@/lib/perfil'
 import { compararRepertorios } from '@/lib/canciones'
 import { compatibilidad } from '@/lib/compatibilidad'
@@ -16,6 +17,7 @@ export function PerfilPublico() {
   const { slug } = useParams<{ slug: string }>()
   const { data: perfil, isLoading, isError } = usePerfilPublico(slug)
   const { profile: miPerfil } = useAuth()
+  const redMusicos = useRedMusicos()
   const [copiado, setCopiado] = useState(false)
 
   const esMio = !!perfil && miPerfil?.id === perfil.id
@@ -97,7 +99,7 @@ export function PerfilPublico() {
 
           {!esMio && <EnComun suyoId={perfil.id} suNombre={perfil.nombre ?? 'este músico'} />}
 
-          <ProximosShows slug={perfil.slug} nombre={perfil.nombre ?? 'este músico'} />
+          {redMusicos && <ProximosShows slug={perfil.slug} nombre={perfil.nombre ?? 'este músico'} />}
 
           <RepertorioPublico musicoId={perfil.id} />
         </>
@@ -109,6 +111,7 @@ export function PerfilPublico() {
 /** Canciones en común entre el músico logueado y el perfil que está mirando. */
 function EnComun({ suyoId, suNombre }: { suyoId: string; suNombre: string }) {
   const { user, isMusico, loading } = useAuth()
+  const redMusicos = useRedMusicos()
   const { data: mias, isLoading: cargandoMias } = useCancionesDe(isMusico ? user?.id : undefined)
   const { data: suyas, isLoading: cargandoSuyas } = useCancionesDe(suyoId)
 
@@ -161,7 +164,7 @@ function EnComun({ suyoId, suNombre }: { suyoId: string; suNombre: string }) {
   return (
     <section className={styles.card} aria-labelledby="en-comun-titulo">
       <h2 id="en-comun-titulo" className={styles.cardTitle}>
-        🤝 {porcentaje}% de compatibilidad · {enComun.length}{' '}
+        🤝 {redMusicos && `${porcentaje}% de compatibilidad · `}{enComun.length}{' '}
         {enComun.length === 1 ? 'canción' : 'canciones'} en común
       </h2>
       <p className={styles.cardMuted}>

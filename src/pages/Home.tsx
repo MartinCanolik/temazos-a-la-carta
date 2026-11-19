@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './Home.module.css'
 import { Navbar } from '@/components/Navbar'
+import { useRedMusicos } from '@/hooks/useRedMusicos'
 import { CONTRATANOS_URL } from '@/lib/contacto'
 
 export function Home() {
+  const redMusicos = useRedMusicos()
   const navigate = useNavigate()
 
   return (
@@ -28,9 +30,11 @@ export function Home() {
       </div>
       {/* CTA */}
       <div className={styles.cta}>
-        <Link to="/shows" className={`btn-primary ${styles.liveCta}`}>
-          Música en vivo
-        </Link>
+        {redMusicos && (
+          <Link to="/shows" className={`btn-primary ${styles.liveCta}`}>
+            Música en vivo
+          </Link>
+        )}
 
         <button className="btn-outline" onClick={() => navigate('/repertorio')}>
           Ver repertorio
@@ -50,9 +54,11 @@ export function Home() {
         </a>
       </div>
 
-      <Link to="/rankings" className={styles.musicosLink}>
-        Rankings de la comunidad
-      </Link>
+      {redMusicos && (
+        <Link to="/rankings" className={styles.musicosLink}>
+          Rankings de la comunidad
+        </Link>
+      )}
 
       {/* Acceso discreto al área de músicos */}
       <Link to="/panel" className={styles.musicosLink}>
