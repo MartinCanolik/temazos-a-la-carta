@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/auth/authContext'
 import { supabase } from '@/lib/supabase'
+import { leerTodo } from '@/lib/paginacion'
 import type { CobroInput, ShowCobro, ShowDatosInput } from '@/lib/database.types'
-import type { ShowConParticipantes, Tema } from '@/lib/shows'
+import { payloadCobrado, type ShowConParticipantes, type Tema } from '@/lib/shows'
 
 export const showsKey = ['shows'] as const
 export const showKey = (id: string | undefined) => ['show', id] as const
@@ -40,21 +41,6 @@ export function useShow(id: string | undefined) {
       return (data as unknown as ShowConParticipantes | null) ?? null
     },
   })
-}
-
-const PAGINA = 1000
-
-/** Reads every page of a query: PostgREST caps a response at 1000 rows and would otherwise undercount silently. */
-async function leerTodo<T>(
-  pagina: (desde: number, hasta: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
-): Promise<T[]> {
-  const filas: T[] = []
-  for (let desde = 0; ; desde += PAGINA) {
-    const { data, error } = await pagina(desde, desde + PAGINA - 1)
-    if (error) throw error
-    filas.push(...(data ?? []))
-    if ((data?.length ?? 0) < PAGINA) return filas
-  }
 }
 
 /** My own fees (RLS: owner-only), keyed by show id. */
@@ -227,7 +213,7 @@ export function useMarcarCobrado() {
     mutationFn: async ({ showId, hoy }: { showId: string; hoy: string }) => {
       const { data, error } = await supabase
         .from('show_cobros')
-        .update({ estado_cobro: 'cobrado', cobrado_en: hoy })
+        .update(payloadCobrado(hoy))
         .eq('show_id', showId)
         .eq('musico_id', user!.id)
         .select('show_id')
