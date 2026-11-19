@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/lib/database.types'
+import { busquedaValida, sanitizarBusqueda } from '@/lib/formacion'
 
 /** Perfil público de un músico por su slug (null si no existe). */
 export function usePerfilPublico(slug: string | undefined) {
@@ -38,11 +39,11 @@ export function useBuscarPerfiles(texto: string, excluirId?: string) {
   const q = texto.trim()
   return useQuery({
     queryKey: ['perfiles-buscar', q, excluirId],
-    enabled: q.length >= 2,
+    // Judged on the sanitized text: "%%" would otherwise become an ilike wildcard that matches everyone.
+    enabled: busquedaValida(q),
     staleTime: 60_000,
     queryFn: async (): Promise<Profile[]> => {
-      // Characters that would break PostgREST's or() syntax or act as ilike wildcards.
-      const seguro = q.replace(/[,()%*_\\"]/g, ' ').trim()
+      const seguro = sanitizarBusqueda(q)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')

@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { useAuth } from '@/auth/authContext'
-import { useDebounce } from '@/hooks/useDebounce'
-import { useBuscarPerfiles, usePerfilesPorSlug } from '@/hooks/usePerfiles'
-import { useRepertoriosDe } from '@/hooks/useRepertoriosDe'
-import { normalizarTexto, slugDesdeLink } from '@/lib/canciones'
+import { Link } from 'react-router-dom'
+import { useFormacion } from '@/hooks/useFormacion'
+import { normalizarTexto } from '@/lib/canciones'
 import {
   analizarFormacion,
   compatibilidad,
@@ -12,65 +9,13 @@ import {
   type CancionAnalizada,
   type MusicoFormacion,
 } from '@/lib/compatibilidad'
-import type { Profile } from '@/lib/database.types'
 import { PanelLayout } from './PanelLayout'
+import { AgregarMusico, ChipsFormacion } from './FormacionPicker'
 import styles from './panel.module.css'
-
-/** Máximo de músicos además de uno mismo. */
-const MAX_OTROS = 7
-
-interface Miembro {
-  id: string
-  nombre: string
-  slug: string | null
-}
 
 /** Armar una formación: elegí músicos y mirá qué saben todos y qué hay que ensayar. La selección vive en ?m=slug1,slug2. */
 export function Formacion() {
-  const { profile: miPerfil, user } = useAuth()
-  const [params, setParams] = useSearchParams()
-
-  const slugs = useMemo(() => {
-    const crudos = (params.get('m') ?? '').split(',').map((s) => slugDesdeLink(s))
-    const validos = crudos.filter((s): s is string => !!s && s !== miPerfil?.slug)
-    return [...new Set(validos)]
-  }, [params, miPerfil?.slug])
-
-  const { data: perfiles, isLoading: cargandoPerfiles, isError: errorPerfiles } = usePerfilesPorSlug(slugs)
-
-  // Keep the URL order and drop slugs that do not resolve to a public profile.
-  const otros = useMemo(() => {
-    const porSlug = new Map((perfiles ?? []).map((p) => [p.slug, p]))
-    return slugs.map((s) => porSlug.get(s)).filter((p): p is Profile => !!p)
-  }, [slugs, perfiles])
-  const noEncontrados = perfiles ? slugs.filter((s) => !perfiles.some((p) => p.slug === s)) : []
-
-  const miembros = useMemo<Miembro[]>(() => {
-    const yo = user?.id ? [{ id: user.id, nombre: miPerfil?.nombre ?? 'Yo', slug: miPerfil?.slug ?? null }] : []
-    return [...yo, ...otros.map((p) => ({ id: p.id, nombre: p.nombre ?? p.slug ?? 'Músico', slug: p.slug }))]
-  }, [user?.id, miPerfil, otros])
-
-  const { data: repertorios, isLoading: cargandoRep, isError: errorRep } = useRepertoriosDe(
-    miembros.map((m) => m.id),
-  )
-
-  const musicos = useMemo<MusicoFormacion[]>(
-    () => miembros.map((m) => ({ id: m.id, nombre: m.nombre, canciones: repertorios?.[m.id] ?? [] })),
-    [miembros, repertorios],
-  )
-
-  function setSlugs(nuevos: string[]) {
-    const next = new URLSearchParams(params)
-    if (nuevos.length > 0) next.set('m', nuevos.join(','))
-    else next.delete('m')
-    setParams(next, { replace: true })
-  }
-
-  const agregar = (slug: string) => {
-    if (slugs.includes(slug) || slug === miPerfil?.slug || slugs.length >= MAX_OTROS) return
-    setSlugs([...slugs, slug])
-  }
-  const quitar = (slug: string | null) => setSlugs(slugs.filter((s) => s !== slug))
+  const f = useFormacion()
 
   return (
     <PanelLayout>
@@ -83,177 +28,20 @@ export function Formacion() {
         ensayar. Compartí el link de esta pantalla para que otros vean la misma formación.
       </p>
 
-      <ChipsFormacion miembros={miembros} miId={user?.id} onQuitar={quitar} noEncontrados={noEncontrados} />
+      <ChipsFormacion miembros={f.miembros} miId={f.miId} onQuitar={f.quitar} noEncontrados={f.noEncontrados} />
 
-      <AgregarMusico
-        excluirId={user?.id}
-        seleccionados={slugs}
-        lleno={slugs.length >= MAX_OTROS}
-        onAgregar={agregar}
-      />
+      <AgregarMusico excluirId={f.miId} seleccionados={f.slugs} lleno={f.lleno} onAgregar={f.agregar} />
 
-      {slugs.length === 0 && (
-        <p className={styles.muted}>Sumá al menos a un músico para comparar repertorios.</p>
-      )}
-      {slugs.length > 0 && (cargandoPerfiles || cargandoRep) && (
-        <p className={styles.muted}>Comparando repertorios…</p>
-      )}
-      {(errorPerfiles || errorRep) && (
-        <p className={styles.error}>No se pudo cargar la formación. Probá de nuevo.</p>
-      )}
+      {f.slugs.length === 0 && <p className={styles.muted}>Sumá al menos a un músico para comparar repertorios.</p>}
+      {f.cargando && <p className={styles.muted}>Comparando repertorios…</p>}
+      {f.error && <p className={styles.error}>No se pudo cargar la formación. Probá de nuevo.</p>}
 
-      {repertorios && !cargandoPerfiles && otros.length > 0 && <Resultado musicos={musicos} />}
+      {f.repertorios && !f.cargandoPerfiles && f.otros.length > 0 && <Resultado musicos={f.musicos} />}
 
       <Link to="/panel/comparar" className={styles.muted} style={{ textAlign: 'center' }}>
         Comparar con un solo músico
       </Link>
     </PanelLayout>
-  )
-}
-
-function ChipsFormacion({
-  miembros,
-  miId,
-  onQuitar,
-  noEncontrados,
-}: {
-  miembros: Miembro[]
-  miId: string | undefined
-  onQuitar: (slug: string | null) => void
-  noEncontrados: string[]
-}) {
-  return (
-    <section
-      aria-label="Músicos de la formación"
-      style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}
-    >
-      <div className={styles.chips}>
-        {miembros.map((m) =>
-          m.id === miId ? (
-            <span key={m.id} className={styles.chipRemovable} style={{ paddingRight: '0.75rem' }}>
-              {m.nombre} (vos)
-            </span>
-          ) : (
-            <span key={m.id} className={styles.chipRemovable}>
-              {m.nombre}
-              <button
-                type="button"
-                className={styles.chipRemove}
-                aria-label={`Quitar a ${m.nombre}`}
-                onClick={() => onQuitar(m.slug)}
-              >
-                ×
-              </button>
-            </span>
-          ),
-        )}
-      </div>
-      {noEncontrados.map((s) => (
-        <p key={s} className={styles.error}>
-          No encontramos a «{s}».{' '}
-          <button type="button" className={styles.btnLink} onClick={() => onQuitar(s)}>
-            Sacar
-          </button>
-        </p>
-      ))}
-    </section>
-  )
-}
-
-const ES_LINK = /\/m\//
-
-function AgregarMusico({
-  excluirId,
-  seleccionados,
-  lleno,
-  onAgregar,
-}: {
-  excluirId: string | undefined
-  seleccionados: string[]
-  lleno: boolean
-  onAgregar: (slug: string) => void
-}) {
-  const [texto, setTexto] = useState('')
-  const [errorLink, setErrorLink] = useState(false)
-  const debounced = useDebounce(texto, 300)
-  const { data: resultados, isFetching } = useBuscarPerfiles(debounced, excluirId)
-
-  const disponibles = (resultados ?? []).filter((p) => p.slug && !seleccionados.includes(p.slug))
-  const pegoLink = ES_LINK.test(texto)
-
-  function agregarLink(e: React.FormEvent) {
-    e.preventDefault()
-    // A pasted link (".../m/slug") is added directly; plain text is only a search.
-    if (!pegoLink) return
-    const slug = slugDesdeLink(texto)
-    if (!slug) {
-      setErrorLink(true)
-      return
-    }
-    onAgregar(slug)
-    setTexto('')
-  }
-
-  return (
-    <form className={styles.card} onSubmit={agregarLink}>
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="formacion-buscar">
-          Sumar un músico
-        </label>
-        <input
-          id="formacion-buscar"
-          className="input-field"
-          placeholder="Nombre, usuario o link de perfil"
-          value={texto}
-          disabled={lleno}
-          onChange={(e) => {
-            setTexto(e.target.value)
-            setErrorLink(false)
-          }}
-          autoComplete="off"
-        />
-        {lleno && <span className={styles.hint}>Llegaste al máximo de músicos por formación.</span>}
-        {errorLink && <span className={styles.error}>Ese link no parece un perfil de músico.</span>}
-      </div>
-
-      {!lleno && !pegoLink && debounced.trim().length >= 2 && (
-        <div aria-live="polite">
-          {isFetching && <p className={styles.cardMuted}>Buscando…</p>}
-          {!isFetching && disponibles.length === 0 && (
-            <p className={styles.cardMuted}>No encontramos músicos con ese nombre.</p>
-          )}
-          <ul className={styles.list}>
-            {disponibles.map((p) => (
-              <li key={p.id} className={styles.listItem}>
-                <button
-                  type="button"
-                  className={`${styles.listMain} ${styles.resultButton}`}
-                  onClick={() => {
-                    onAgregar(p.slug!)
-                    setTexto('')
-                  }}
-                  aria-label={`Sumar a ${p.nombre ?? p.slug}`}
-                >
-                  <span className={styles.listTitle}>{p.nombre ?? p.slug}</span>
-                  <span className={styles.listSub}>
-                    {[p.ciudad, p.instrumentos.join(', ')].filter(Boolean).join(' · ') || `/m/${p.slug}`}
-                  </span>
-                </button>
-                <span className={styles.chip} aria-hidden="true">
-                  + Sumar
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {pegoLink && (
-        <button type="submit" className="btn-primary">
-          Sumar con este link
-        </button>
-      )}
-    </form>
   )
 }
 

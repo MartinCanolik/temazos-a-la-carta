@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { claveCancion, normalizarTexto } from '@/lib/canciones'
+import { busquedaValida, sanitizarBusqueda } from '@/lib/formacion'
 import type {
   CancionCatalogo,
   CancionMusico,
@@ -47,11 +48,11 @@ export function useBuscarCatalogo(texto: string) {
   const q = texto.trim()
   return useQuery({
     queryKey: ['catalogo', q],
-    enabled: q.length >= 2,
+    // Judged on the sanitized text, so wildcard-only input never reaches the query.
+    enabled: busquedaValida(q),
     staleTime: 60_000,
     queryFn: async (): Promise<CancionCatalogo[]> => {
-      // Characters that would break PostgREST's or() syntax or act as ilike wildcards.
-      const seguro = q.replace(/[,()%*_\\"]/g, ' ').trim()
+      const seguro = sanitizarBusqueda(q)
       const clave = normalizarTexto(q)
       const filtros = [`titulo.ilike.%${seguro}%`, `artista.ilike.%${seguro}%`]
       if (clave) filtros.push(`clave.ilike.%${clave}%`)
