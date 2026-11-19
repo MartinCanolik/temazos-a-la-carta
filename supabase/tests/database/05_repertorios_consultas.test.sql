@@ -42,7 +42,12 @@ select is(
   5, 'the lineup history is limited to 5 by default'
 );
 select is(
-  (select nombre from public.repertorios_de_formacion(array['33333333-3333-3333-3333-333333333333']::uuid[]) limit 1),
+  -- WITH ORDINALITY pins the row order the function emits, instead of relying on the outer query.
+  (select r.nombre
+     from public.repertorios_de_formacion(array['33333333-3333-3333-3333-333333333333']::uuid[])
+       with ordinality as r
+    order by r.ordinality
+    limit 1),
   'Set 7', 'the most recent setlist comes first'
 );
 select is(

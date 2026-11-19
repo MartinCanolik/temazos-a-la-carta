@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "npx --yes supabase test db"
+    "test:db": "npx --yes supabase@3.2.0 test db"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
