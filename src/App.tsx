@@ -12,6 +12,7 @@ import { MiRepertorio } from '@/pages/panel/MiRepertorio'
 import { Comparar } from '@/pages/panel/Comparar'
 import { MisToques } from '@/pages/panel/MisToques'
 import { EditarToque } from '@/pages/panel/EditarToque'
+import { GestionCola } from '@/pages/panel/GestionCola'
 import { PerfilPublico } from '@/pages/PerfilPublico'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { RequireMusico } from '@/auth/RequireMusico'
@@ -84,6 +85,14 @@ export function App() {
                 element={
                   <RequireMusico>
                     <EditarToque />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/cola"
+                element={
+                  <RequireMusico>
+                    <GestionCola />
                   </RequireMusico>
                 }
               />
