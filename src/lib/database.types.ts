@@ -36,6 +36,12 @@ export type Database = {
           id: string
           role: Rol
           nombre: string | null
+          slug: string | null
+          instrumentos: string[]
+          ciudad: string | null
+          bio: string | null
+          whatsapp: string | null
+          instagram: string | null
           created_at: string
           updated_at: string
         }
@@ -49,6 +55,12 @@ export type Database = {
         /** El cliente sólo puede editar columnas de perfil (nunca `role`). */
         Update: {
           nombre?: string | null
+          slug?: string | null
+          instrumentos?: string[]
+          ciudad?: string | null
+          bio?: string | null
+          whatsapp?: string | null
+          instagram?: string | null
         }
         Relationships: []
       }
