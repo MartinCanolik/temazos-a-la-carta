@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePerfilPublico } from '@/hooks/usePerfiles'
 import { useCancionesDe } from '@/hooks/useCancionesMusico'
 import { useAuth } from '@/auth/authContext'
 import { instagramUrl, perfilUrl, whatsappUrl } from '@/lib/perfil'
+import { compararRepertorios } from '@/lib/canciones'
 import { PanelLayout } from './panel/PanelLayout'
 import styles from './panel/panel.module.css'
 
@@ -91,10 +92,102 @@ export function PerfilPublico() {
             </Link>
           )}
 
+          {!esMio && <EnComun suyoId={perfil.id} suNombre={perfil.nombre ?? 'este músico'} />}
+
           <RepertorioPublico musicoId={perfil.id} />
         </>
       )}
     </PanelLayout>
+  )
+}
+
+/** Canciones en común entre el músico logueado y el perfil que está mirando. */
+function EnComun({ suyoId, suNombre }: { suyoId: string; suNombre: string }) {
+  const { user, isMusico, loading } = useAuth()
+  const { data: mias, isLoading: cargandoMias } = useCancionesDe(isMusico ? user?.id : undefined)
+  const { data: suyas, isLoading: cargandoSuyas } = useCancionesDe(suyoId)
+
+  const comparacion = useMemo(
+    () => (mias && suyas ? compararRepertorios(mias, suyas) : null),
+    [mias, suyas],
+  )
+
+  if (loading) return null
+
+  if (!isMusico) {
+    return (
+      <div className={styles.card}>
+        <p className={styles.cardTitle}>¿Sos músico?</p>
+        <p className={styles.cardMuted}>
+          Entrá con tu cuenta y cargá tu repertorio para ver qué canciones tenés en común con{' '}
+          {suNombre}.
+        </p>
+        <Link to="/login" className="btn-primary">
+          Entrar
+        </Link>
+      </div>
+    )
+  }
+
+  if (cargandoMias || cargandoSuyas || !comparacion) {
+    return <p className={styles.muted}>Comparando repertorios…</p>
+  }
+
+  if ((mias?.length ?? 0) === 0) {
+    return (
+      <div className={styles.card}>
+        <p className={styles.cardTitle}>Canciones en común</p>
+        <p className={styles.cardMuted}>
+          Cargá tu repertorio para ver qué canciones tenés en común.
+        </p>
+        <Link to="/panel/repertorio" className="btn-primary">
+          Cargar mi repertorio
+        </Link>
+      </div>
+    )
+  }
+
+  const { enComun, soloMias, soloSuyas } = comparacion
+
+  return (
+    <section className={styles.card} aria-labelledby="en-comun-titulo">
+      <h2 id="en-comun-titulo" className={styles.cardTitle}>
+        🤝 {enComun.length} {enComun.length === 1 ? 'canción' : 'canciones'} en común
+      </h2>
+      <p className={styles.cardMuted}>
+        Vos tocás {soloMias.length} que {suNombre} no tiene, y {suNombre} toca {soloSuyas.length}{' '}
+        que vos no.
+      </p>
+
+      {enComun.length > 0 && (
+        <ul className={styles.list}>
+          {enComun.map(({ mia, suya }) => {
+            const distintoTono = mia.tonalidad && suya.tonalidad && mia.tonalidad !== suya.tonalidad
+            return (
+              <li key={mia.id} className={styles.listItem}>
+                <div className={styles.listMain}>
+                  <span className={styles.listTitle}>{mia.titulo}</span>
+                  <span className={styles.listSub}>{mia.artista}</span>
+                  {(mia.tonalidad || suya.tonalidad || mia.version || suya.version) && (
+                    <span className={styles.listSub}>
+                      Vos: {[mia.tonalidad, mia.version].filter(Boolean).join(' · ') || '—'} ·{' '}
+                      {suNombre}: {[suya.tonalidad, suya.version].filter(Boolean).join(' · ') || '—'}
+                    </span>
+                  )}
+                </div>
+                {distintoTono ? (
+                  <span className={styles.chip} title="La tocan en distinta tonalidad">
+                    ⚠ tono
+                  </span>
+                ) : (
+                  <span className={styles.chip}>✓</span>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
   )
 }
 

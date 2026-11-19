@@ -36,3 +36,58 @@ export function parsearListaCanciones(texto: string): { titulo: string; artista:
     })
     .filter((c) => c.titulo.length > 0)
 }
+
+interface CancionComparable {
+  titulo: string
+  artista: string
+  spotify_track_id?: string | null
+}
+
+export interface ComparacionRepertorios<T extends CancionComparable> {
+  /** Canciones que tocan los dos, con la versión de cada uno. */
+  enComun: { mia: T; suya: T }[]
+  soloMias: T[]
+  soloSuyas: T[]
+}
+
+/**
+ * Compara dos repertorios. Dos canciones son la misma si comparten el track de Spotify
+ * o si coinciden título + artista normalizados (sin acentos, mayúsculas ni "(En vivo)").
+ */
+export function compararRepertorios<T extends CancionComparable>(
+  mias: T[],
+  suyas: T[],
+): ComparacionRepertorios<T> {
+  const suyasPorClave = new Map<string, T>()
+  const suyasPorSpotify = new Map<string, T>()
+  for (const s of suyas) {
+    suyasPorClave.set(claveCancion(s.titulo, s.artista), s)
+    if (s.spotify_track_id) suyasPorSpotify.set(s.spotify_track_id, s)
+  }
+
+  const enComun: { mia: T; suya: T }[] = []
+  const soloMias: T[] = []
+  const suyasUsadas = new Set<T>()
+
+  for (const m of mias) {
+    const suya =
+      (m.spotify_track_id ? suyasPorSpotify.get(m.spotify_track_id) : undefined) ??
+      suyasPorClave.get(claveCancion(m.titulo, m.artista))
+    if (suya && !suyasUsadas.has(suya)) {
+      enComun.push({ mia: m, suya })
+      suyasUsadas.add(suya)
+    } else {
+      soloMias.push(m)
+    }
+  }
+
+  return { enComun, soloMias, soloSuyas: suyas.filter((s) => !suyasUsadas.has(s)) }
+}
+
+/** Extrae el slug de un link de perfil (".../m/juan-perez") o lo devuelve si ya es un slug. */
+export function slugDesdeLink(texto: string): string | null {
+  const limpio = texto.trim()
+  const match = limpio.match(/\/m\/([a-z0-9-]+)/i)
+  const slug = (match ? match[1] : limpio).toLowerCase()
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) ? slug : null
+}
