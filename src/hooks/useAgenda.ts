@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { AgendaPublicaFila, UbicacionConShows } from '@/lib/database.types'
+import { esUuid } from '@/lib/agenda'
 
 export interface FiltrosAgenda {
   desde?: string | null
@@ -25,9 +26,10 @@ async function leerAgenda(f: FiltrosAgenda): Promise<AgendaPublicaFila[]> {
   return data ?? []
 }
 
-export function useAgendaPublica(filtros: FiltrosAgenda) {
+export function useAgendaPublica(filtros: FiltrosAgenda, enabled = true) {
   return useQuery({
     queryKey: ['agenda-publica', filtros],
+    enabled,
     queryFn: () => leerAgenda(filtros),
   })
 }
@@ -36,7 +38,9 @@ export function useAgendaPublica(filtros: FiltrosAgenda) {
 export function useShowPublico(id: string | undefined) {
   return useQuery({
     queryKey: ['agenda-publica-show', id],
-    enabled: !!id,
+    // A malformed id would fail the uuid cast (22P02): treat it as not found without calling.
+    enabled: esUuid(id),
+    retry: false,
     queryFn: async (): Promise<AgendaPublicaFila | null> => (await leerAgenda({ showId: id }))[0] ?? null,
   })
 }

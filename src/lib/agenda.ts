@@ -170,3 +170,24 @@ export function opcionesUbicacion(lugares: UbicacionConShows[]): OpcionUbicacion
 export function buscarOpcion(opciones: OpcionUbicacion[], valor: string): OpcionUbicacion {
   return opciones.find((o) => o.valor === valor) ?? TODAS_LAS_UBICACIONES
 }
+
+// ─── Helpers shared with the server rules ───────────────────────────────────
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Is this a well-formed UUID? Guards route params before they reach a `uuid` RPC argument. */
+export function esUuid(valor: string | undefined | null): valor is string {
+  return !!valor && UUID.test(valor)
+}
+
+const FORMATO_RIOPLATENSE = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Argentina/Buenos_Aires',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** Today as YYYY-MM-DD in the Rio de la Plata zone, the same "today" the public agenda uses in the database. */
+export function hoyRioplatense(ahora: Date = new Date()): string {
+  return FORMATO_RIOPLATENSE.format(ahora)
+}

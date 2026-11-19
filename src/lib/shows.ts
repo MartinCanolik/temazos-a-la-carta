@@ -334,3 +334,8 @@ export function masTocadas(cancionIds: string[], limite: number): { cancion_id: 
     .sort((a, b) => b.veces - a.veces || a.cancion_id.localeCompare(b.cancion_id))
     .slice(0, limite)
 }
+
+/** Update payload that marks MY fee as collected on `hoy` (YYYY-MM-DD). */
+export function payloadCobrado(hoy: string): { estado_cobro: 'cobrado'; cobrado_en: string } {
+  return { estado_cobro: 'cobrado', cobrado_en: hoy }
+}
