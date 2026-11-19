@@ -23,6 +23,12 @@ export function PanelHome() {
       title: 'Mi perfil',
       text: perfilCompleto ? 'Tus datos, instrumentos y contacto.' : 'Completalo para compartirlo.',
     },
+    {
+      to: '/panel/repertorio',
+      icon: '🎼',
+      title: 'Mi repertorio',
+      text: 'Las canciones que tocás y tu versión.',
+    },
   ]
   if (profile?.slug) {
     accesos.push({
