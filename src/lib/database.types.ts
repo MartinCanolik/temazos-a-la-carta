@@ -368,7 +368,7 @@ export type Database = {
         Returns: string
       }
       guardar_show: {
-        Args: { p_id: string | null; p_datos: ShowDatosInput; p_musicos: string[]; p_cobro?: CobroInput | null }
+        Args: { p_id: string | null; p_datos: ShowDatosInput; p_musicos: string[]; p_cobro?: CobroInput | null; p_quitar?: string[] }
         Returns: string
       }
       responder_invitacion: {
