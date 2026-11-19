@@ -10,7 +10,7 @@ import {
   useBorrarRepertorio,
   useGuardarRepertorio,
   useRepertorio,
-  useRepertorios,
+  useRepertoriosDeFormacion,
   type RepertorioResumen,
 } from '@/hooks/useRepertorios'
 import {
@@ -21,13 +21,13 @@ import {
   type CancionAnalizada,
 } from '@/lib/compatibilidad'
 import type { CancionCatalogo } from '@/lib/database.types'
+import { guardadosPendientes, idsParaGuardar } from '@/lib/formacion'
 import {
   agregarItem,
   alternarPreparar,
   estadoDeItem,
   moverItem,
   quitarItem,
-  repertoriosRecientes,
   resumenRepertorio,
   type ItemRepertorio,
 } from '@/lib/repertorio'
@@ -69,7 +69,7 @@ export function ArmarRepertorio() {
   // Without ?m=, start from the lineup the setlist was built for.
   const sinFormacionEnUrl = !params.get('m')
   const otrosIds = origen && sinFormacionEnUrl ? origen.musicoIds.filter((m) => m !== user?.id) : []
-  const { data: perfilesOrigen } = usePerfilesPorId(otrosIds)
+  const { data: perfilesOrigen, isError: errorPerfilesOrigen } = usePerfilesPorId(otrosIds)
   const sembrado = useRef(false)
   useEffect(() => {
     if (sembrado.current || !sinFormacionEnUrl || !perfilesOrigen) return
@@ -80,6 +80,9 @@ export function ArmarRepertorio() {
     next.set('m', slugs.join(','))
     setParams(next, { replace: true })
   }, [perfilesOrigen, sinFormacionEnUrl, params, setParams])
+
+  // The stored lineup is kept by id, so saving is safe once it is in the URL or there is nothing to seed.
+  const formacionLista = !origen || !sinFormacionEnUrl || otrosIds.length === 0 || !!perfilesOrigen || errorPerfilesOrigen
 
   const titulo = id ? 'Editar repertorio' : 'Armar repertorio'
 
@@ -111,10 +114,32 @@ export function ArmarRepertorio() {
       : { nombre: `${origen.nombre} (copia)`, notas: origen.notas ?? '', items: origen.items, basadoEn: origen.id, creadoPor: null }
     : VACIO
 
-  return <Armador key={id ?? desde ?? 'nuevo'} id={id ?? null} titulo={titulo} inicial={inicial} />
+  return (
+    <Armador
+      key={id ?? desde ?? 'nuevo'}
+      id={id ?? null}
+      titulo={titulo}
+      inicial={inicial}
+      guardados={origen?.musicoIds ?? []}
+      formacionLista={formacionLista}
+    />
+  )
 }
 
-function Armador({ id, titulo, inicial }: { id: string | null; titulo: string; inicial: Inicial }) {
+function Armador({
+  id,
+  titulo,
+  inicial,
+  guardados,
+  formacionLista,
+}: {
+  id: string | null
+  titulo: string
+  inicial: Inicial
+  /** Lineup of the setlist being edited or copied, by member id. */
+  guardados: string[]
+  formacionLista: boolean
+}) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -130,6 +155,28 @@ function Armador({ id, titulo, inicial }: { id: string | null; titulo: string; i
     (location.state as { creado?: boolean } | null)?.creado ? 'Repertorio guardado ✓' : null,
   )
   const [error, setError] = useState<string | null>(null)
+  const [quitados, setQuitados] = useState<string[]>([])
+
+  const seleccionados = useMemo(() => f.miembros.map((m) => m.id), [f.miembros])
+  const idsFormacion = useMemo(
+    () => idsParaGuardar(user?.id, guardados, seleccionados, quitados),
+    [user?.id, guardados, seleccionados, quitados],
+  )
+  const pendientesIds = useMemo(
+    () => guardadosPendientes(user?.id, guardados, seleccionados, quitados),
+    [user?.id, guardados, seleccionados, quitados],
+  )
+  const { data: perfilesPendientes } = usePerfilesPorId(pendientesIds)
+  const pendientes = pendientesIds.map((pid) => {
+    const p = perfilesPendientes?.find((x) => x.id === pid)
+    return { id: pid, nombre: p?.nombre ?? p?.slug ?? 'Músico' }
+  })
+
+  const quitarMiembro = (slug: string | null) => {
+    const miembro = f.miembros.find((m) => m.slug === slug)
+    if (miembro) setQuitados((q) => [...q, miembro.id])
+    f.quitar(slug)
+  }
 
   const analisis = useMemo(() => analizarFormacion(f.musicos), [f.musicos])
   // Statuses only mean something once every member's repertoire is loaded.
@@ -154,7 +201,7 @@ function Armador({ id, titulo, inicial }: { id: string | null; titulo: string; i
         id,
         nombre,
         notas,
-        musicoIds: f.miembros.map((m) => m.id),
+        musicoIds: idsFormacion,
         items,
         basadoEn,
       })
@@ -195,7 +242,7 @@ function Armador({ id, titulo, inicial }: { id: string | null; titulo: string; i
     }
   }
 
-  const puedeGuardar = nombre.trim().length > 0 && items.length > 0 && !guardar.isPending
+  const puedeGuardar = nombre.trim().length > 0 && items.length > 0 && !guardar.isPending && formacionLista
   const soyCreador = !!id && inicial.creadoPor === user?.id
 
   return (
@@ -208,7 +255,14 @@ function Armador({ id, titulo, inicial }: { id: string | null; titulo: string; i
         Sumá a los músicos con los que vas a tocar, mirá qué sabemos entre todos y armá el orden del show.
       </p>
 
-      <ChipsFormacion miembros={f.miembros} miId={f.miId} onQuitar={f.quitar} noEncontrados={f.noEncontrados} />
+      <ChipsFormacion
+        miembros={f.miembros}
+        miId={f.miId}
+        onQuitar={quitarMiembro}
+        noEncontrados={f.noEncontrados}
+        pendientes={pendientes}
+        onQuitarPendiente={(pid) => setQuitados((q) => [...q, pid])}
+      />
       <AgregarMusico excluirId={f.miId} seleccionados={f.slugs} lleno={f.lleno} onAgregar={f.agregar} />
 
       {f.cargando && <p className={styles.muted}>Comparando repertorios…</p>}
@@ -292,6 +346,7 @@ function Armador({ id, titulo, inicial }: { id: string | null; titulo: string; i
             {mensaje}
           </p>
         )}
+        {!formacionLista && <span className={styles.hint}>Cargando la formación guardada…</span>}
         {items.length === 0 && nombre.trim() && <span className={styles.hint}>Sumá al menos un tema para guardar.</span>}
         <button type="submit" className="btn-primary" disabled={!puedeGuardar}>
           {guardar.isPending ? 'Guardando…' : id ? 'Guardar cambios' : 'Guardar repertorio'}
@@ -327,7 +382,7 @@ function Armador({ id, titulo, inicial }: { id: string | null; titulo: string; i
       <BuscarCancion enLista={enLista} onAgregar={(c) => modificar((p) => agregarItem(p, aItem({ ...c, cancion_id: c.id })))} />
 
       <Historial
-        musicoIds={f.miembros.map((m) => m.id)}
+        musicoIds={idsFormacion}
         miId={f.miId}
         excluirId={id}
         analisis={analisis}
@@ -562,15 +617,9 @@ function Historial({
   listo: boolean
   onUsar: (r: RepertorioResumen) => void
 }) {
-  const { data: todos, isLoading, isError } = useRepertorios()
   const referencia = musicoIds.length > 1 ? musicoIds.filter((m) => m !== miId) : musicoIds
-  const recientes = useMemo(
-    () => repertoriosRecientes((todos ?? []).map((r) => ({ ...r, musicoIds: r.musicoIds })), referencia, excluirId),
-    // `referencia` is rebuilt on each render; its content is captured by the joined key.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [todos, referencia.join(','), excluirId],
-  )
-  const idsMusicos = useMemo(() => [...new Set(recientes.flatMap((r) => r.musicoIds))], [recientes])
+  const { data: recientes, isLoading, isError } = useRepertoriosDeFormacion(referencia, excluirId)
+  const idsMusicos = useMemo(() => [...new Set((recientes ?? []).flatMap((r) => r.musicoIds))], [recientes])
   const { data: perfiles } = usePerfilesPorId(idsMusicos)
   const nombres = new Map((perfiles ?? []).map((p) => [p.id, p.nombre ?? p.slug ?? 'Músico']))
 
@@ -581,11 +630,11 @@ function Historial({
       </h2>
       {isLoading && <p className={styles.cardMuted}>Cargando…</p>}
       {isError && <p className={styles.error}>No se pudo cargar el historial.</p>}
-      {todos && recientes.length === 0 && (
+      {recientes && recientes.length === 0 && (
         <p className={styles.cardMuted}>Todavía no hay repertorios armados con estos músicos.</p>
       )}
       <ul className={styles.list}>
-        {recientes.map((r) => {
+        {(recientes ?? []).map((r) => {
           const cobertura = listo ? coberturaRepertorio(r.cancionIds, analisis) : null
           return (
             <li key={r.id} className={styles.listItem}>

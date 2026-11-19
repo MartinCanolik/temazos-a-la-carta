@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/authContext'
 import { useFormacion } from '@/hooks/useFormacion'
 import { usePerfilesPorId } from '@/hooks/usePerfiles'
-import { useRepertorios } from '@/hooks/useRepertorios'
+import { useRepertorio, useRepertorios } from '@/hooks/useRepertorios'
 import {
   useBorrarShow,
   useGuardarShow,
@@ -159,7 +159,16 @@ function Formulario({ show, cobro }: { show: ShowConParticipantes | null; cobro:
   const guardar = useGuardarShow()
   const borrar = useBorrarShow()
   const salir = useSalirDeShow()
-  const { data: repertorios } = useRepertorios()
+  const { data: misRepertoriosLista } = useRepertorios()
+  // The setlist already linked to the show may belong to someone else's lineup; keep it selectable.
+  const { data: repertorioDelShow } = useRepertorio(show?.repertorio_id ?? undefined)
+  const repertorios = useMemo(
+    () =>
+      repertorioDelShow && !misRepertoriosLista?.some((r) => r.id === repertorioDelShow.id)
+        ? [...(misRepertoriosLista ?? []), repertorioDelShow]
+        : misRepertoriosLista,
+    [misRepertoriosLista, repertorioDelShow],
+  )
 
   const hoy = hoyISO()
   const miId = user?.id

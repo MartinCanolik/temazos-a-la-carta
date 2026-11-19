@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '@/auth/authContext'
 import { supabase } from '@/lib/supabase'
 import { aPayload, type ItemRepertorio } from '@/lib/repertorio'
 import type { Repertorio } from '@/lib/database.types'
@@ -47,19 +48,62 @@ function resumir(f: FilaResumen | FilaDetalle): RepertorioResumen {
   }
 }
 
-/** Todos los repertorios visibles (cualquier músico logueado los puede leer), el más reciente primero. */
+const SELECT_RESUMEN =
+  '*, musicos:repertorio_musicos(musico_id), canciones:repertorio_canciones(cancion_id, orden, a_preparar)'
+
+/** Repertorios por id, el más reciente primero. */
+async function fetchResumenes(ids: string[], excluirId?: string | null, limite = 200): Promise<RepertorioResumen[]> {
+  if (ids.length === 0) return []
+  let q = supabase.from('repertorios').select(SELECT_RESUMEN).in('id', ids)
+  if (excluirId) q = q.neq('id', excluirId)
+  const { data, error } = await q.order('updated_at', { ascending: false }).limit(limite)
+  if (error) throw error
+  return ((data ?? []) as unknown as FilaResumen[]).map(resumir)
+}
+
+/** Mis repertorios: los que creé o donde estoy en la formación (filtrado en el servidor), el más reciente primero. */
 export function useRepertorios(enabled = true) {
+  const { user } = useAuth()
+  const miId = user?.id
   return useQuery({
-    queryKey: repertoriosKey,
-    enabled,
+    queryKey: [...repertoriosKey, miId],
+    enabled: enabled && !!miId,
     queryFn: async (): Promise<RepertorioResumen[]> => {
+      const { data: mios, error: errorMios } = await supabase
+        .from('repertorio_musicos')
+        .select('repertorio_id')
+        .eq('musico_id', miId!)
+      if (errorMios) throw errorMios
+      const idsMiembro = (mios ?? []).map((r) => r.repertorio_id)
+      // `id.in.()` is invalid PostgREST, so only add it when I belong to some lineup.
+      const filtro =
+        idsMiembro.length > 0 ? `creado_por.eq.${miId},id.in.(${idsMiembro.join(',')})` : `creado_por.eq.${miId}`
       const { data, error } = await supabase
         .from('repertorios')
-        .select('*, musicos:repertorio_musicos(musico_id), canciones:repertorio_canciones(cancion_id, orden, a_preparar)')
+        .select(SELECT_RESUMEN)
+        .or(filtro)
         .order('updated_at', { ascending: false })
         .limit(200)
       if (error) throw error
       return ((data ?? []) as unknown as FilaResumen[]).map(resumir)
+    },
+  })
+}
+
+/** Últimos repertorios (máx. 5) cuya formación incluye a alguno de estos músicos, sin el que se está editando. */
+export function useRepertoriosDeFormacion(musicoIds: string[], excluirId: string | null) {
+  const clave = [...musicoIds].sort().join(',')
+  return useQuery({
+    queryKey: ['repertorios-formacion', clave, excluirId],
+    enabled: musicoIds.length > 0,
+    queryFn: async (): Promise<RepertorioResumen[]> => {
+      const { data, error } = await supabase
+        .from('repertorio_musicos')
+        .select('repertorio_id')
+        .in('musico_id', musicoIds)
+      if (error) throw error
+      const ids = [...new Set((data ?? []).map((r) => r.repertorio_id))]
+      return fetchResumenes(ids, excluirId, 5)
     },
   })
 }
