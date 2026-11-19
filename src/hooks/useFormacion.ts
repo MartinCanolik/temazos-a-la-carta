@@ -4,7 +4,7 @@ import { useAuth } from '@/auth/authContext'
 import { usePerfilesPorSlug } from '@/hooks/usePerfiles'
 import { useRepertoriosDe } from '@/hooks/useRepertoriosDe'
 import type { MusicoFormacion } from '@/lib/compatibilidad'
-import { MAX_OTROS, derivarFormacion, parsearSlugs, type Miembro } from '@/lib/formacion'
+import { agregarSlug, derivarFormacion, formacionLlena, parsearSlugs, type Miembro } from '@/lib/formacion'
 
 /**
  * Formación elegida (vos + otros músicos), persistida en `?m=slug1,slug2`.
@@ -42,12 +42,12 @@ export function useFormacion() {
     setParams(next, { replace: true })
   }
 
-  /** El límite se mide sobre los músicos resueltos, no sobre los slugs crudos de la URL. */
-  const lleno = otros.length >= MAX_OTROS
+  /** Same rule as the URL parser: capped on raw slugs and on resolved members. */
+  const lleno = formacionLlena(slugs, otros.length)
 
   const agregar = (slug: string) => {
-    if (lleno || slugs.includes(slug) || slug === miPerfil?.slug) return
-    setSlugs([...slugs, slug])
+    const nuevos = agregarSlug(slugs, slug, miPerfil?.slug, otros.length)
+    if (nuevos !== slugs) setSlugs(nuevos)
   }
   const quitar = (slug: string | null) => setSlugs(slugs.filter((s) => s !== slug))
 

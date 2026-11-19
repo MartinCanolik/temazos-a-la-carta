@@ -75,3 +75,44 @@ export function sanitizarBusqueda(texto: string): string {
 export function busquedaValida(texto: string): boolean {
   return sanitizarBusqueda(texto).length >= 2
 }
+
+/** ¿Ya no entran más músicos? Cuenta los slugs crudos (lo que recorta `parsearSlugs`) y los miembros resueltos. */
+export function formacionLlena(slugs: string[], otrosResueltos: number): boolean {
+  return slugs.length >= MAX_OTROS || otrosResueltos >= MAX_OTROS
+}
+
+/** Slugs tras sumar `slug`; devuelve la misma lista si ya está, es el propio o la formación está llena. */
+export function agregarSlug(slugs: string[], slug: string, propioSlug?: string | null, otrosResueltos = 0): string[] {
+  if (formacionLlena(slugs, otrosResueltos) || slugs.includes(slug) || slug === propioSlug) return slugs
+  return [...slugs, slug]
+}
+
+/**
+ * Ids de la formación a guardar: yo + los guardados (por id, tengan o no slug público) + los elegidos ahora,
+ * menos los que se quitaron explícitamente. Un elegido gana sobre un quitado (se volvió a sumar).
+ */
+export function idsParaGuardar(
+  yoId: string | undefined,
+  guardados: string[],
+  seleccionados: string[],
+  quitados: Iterable<string> = [],
+): string[] {
+  const fuera = new Set(quitados)
+  const ids = [
+    ...(yoId ? [yoId] : []),
+    ...guardados.filter((id) => !fuera.has(id)),
+    ...seleccionados,
+  ]
+  return [...new Set(ids)]
+}
+
+/** Miembros guardados que todavía no están entre los elegidos (sin perfil público o con la URL sin sembrar). */
+export function guardadosPendientes(
+  yoId: string | undefined,
+  guardados: string[],
+  seleccionados: string[],
+  quitados: Iterable<string> = [],
+): string[] {
+  const excluidos = new Set([...(yoId ? [yoId] : []), ...seleccionados, ...quitados])
+  return [...new Set(guardados)].filter((id) => !excluidos.has(id))
+}

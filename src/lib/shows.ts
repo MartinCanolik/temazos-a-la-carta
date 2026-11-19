@@ -259,18 +259,18 @@ export function urlValida(texto: string): boolean {
 // ─── Lineup ─────────────────────────────────────────────────────────────────
 
 /**
- * Final `p_musicos`: the lineup chosen in the form plus everyone already in the show.
- * Only the creator may drop existing participants, and only the ones the form could resolve
- * (`resolubles`: ids whose profile is public); anyone else is always kept.
+ * Lineup changes to send to `guardar_show`: `agregar` only adds or keeps (the server never deletes from it),
+ * `quitar` lists the explicit removals. Only participants the form could resolve (`resolubles`: ids whose
+ * profile is public) can be removed; anyone else (e.g. invited by someone else meanwhile) is never touched.
  */
 export function musicosAGuardar(
   elegidos: string[],
   existentes: string[],
-  soyCreador: boolean,
   resolubles: Set<string>,
-): string[] {
-  const conservar = existentes.filter((id) => !soyCreador || !resolubles.has(id) || elegidos.includes(id))
-  return [...new Set([...elegidos, ...conservar])]
+): { agregar: string[]; quitar: string[] } {
+  const agregar = [...new Set(elegidos)]
+  const quitar = existentes.filter((id) => resolubles.has(id) && !elegidos.includes(id))
+  return { agregar, quitar: [...new Set(quitar)] }
 }
 
 // ─── Played songs ───────────────────────────────────────────────────────────

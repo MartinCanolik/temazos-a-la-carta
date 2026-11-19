@@ -11,11 +11,16 @@ export function ChipsFormacion({
   miId,
   onQuitar,
   noEncontrados,
+  pendientes = [],
+  onQuitarPendiente,
 }: {
   miembros: Miembro[]
   miId: string | undefined
   onQuitar: (slug: string | null) => void
   noEncontrados: string[]
+  /** Saved members not in the URL (no public slug, or still loading): removed by id, not by slug. */
+  pendientes?: { id: string; nombre: string }[]
+  onQuitarPendiente?: (id: string) => void
 }) {
   return (
     <section
@@ -42,6 +47,21 @@ export function ChipsFormacion({
             </span>
           ),
         )}
+        {pendientes.map((m) => (
+          <span key={m.id} className={styles.chipRemovable}>
+            {m.nombre}
+            {onQuitarPendiente && (
+              <button
+                type="button"
+                className={styles.chipRemove}
+                aria-label={`Quitar a ${m.nombre}`}
+                onClick={() => onQuitarPendiente(m.id)}
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))}
       </div>
       {noEncontrados.map((s) => (
         <p key={s} className={styles.error}>
