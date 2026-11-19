@@ -23,8 +23,29 @@ interface Props {
 
 /** Checklist of the songs actually played: starts from the setlist, everything checked. */
 export function ConfirmarTemas({ showId, repertorioId, confirmado }: Props) {
-  const { data: setlist, isLoading: cargandoSetlist } = useRepertorio(repertorioId ?? undefined)
-  const { data: tocadas, isLoading: cargandoTocadas } = useTocadas(showId)
+  const { data: setlist, isLoading: cargandoSetlist, isError: errorSetlist, refetch: recargarSetlist } = useRepertorio(
+    repertorioId ?? undefined,
+  )
+  const { data: tocadas, isLoading: cargandoTocadas, isError: errorTocadas, refetch: recargarTocadas } = useTocadas(showId)
+
+  // A failed read must never reach the checklist: confirming from a default/empty list would overwrite the saved songs.
+  if (errorSetlist || errorTocadas) {
+    return (
+      <section className={styles.card} aria-label="Temas tocados">
+        <p className={styles.error}>No se pudieron cargar los temas. No podés confirmarlos hasta que carguen.</p>
+        <button
+          type="button"
+          className={styles.btnSecondary}
+          onClick={() => {
+            if (errorSetlist) void recargarSetlist()
+            if (errorTocadas) void recargarTocadas()
+          }}
+        >
+          Reintentar
+        </button>
+      </section>
+    )
+  }
 
   if ((repertorioId && cargandoSetlist) || cargandoTocadas) {
     return (
