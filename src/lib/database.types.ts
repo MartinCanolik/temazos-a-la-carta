@@ -363,6 +363,14 @@ export type Database = {
         }
         Returns: string
       }
+      mis_repertorios: {
+        Args: Record<string, never>
+        Returns: Repertorio[]
+      }
+      repertorios_de_formacion: {
+        Args: { p_musicos: string[]; p_excluir?: string | null; p_limite?: number }
+        Returns: Repertorio[]
+      }
       duplicar_repertorio: {
         Args: { p_id: string; p_nombre?: string | null }
         Returns: string

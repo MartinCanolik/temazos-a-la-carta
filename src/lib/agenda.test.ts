@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   agruparPorFecha,
   buscarOpcion,
+  esUuid,
+  hoyRioplatense,
   etiquetaDia,
   lineaInvitados,
   lineaLugar,
@@ -150,5 +152,26 @@ describe('buscarOpcion', () => {
     const opciones = opcionesUbicacion([{ ciudad: 'CABA', zona: null, shows: 1 }])
     expect(buscarOpcion(opciones, 'c:CABA').ciudad).toBe('CABA')
     expect(buscarOpcion(opciones, 'c:Salta')).toBe(TODAS_LAS_UBICACIONES)
+  })
+})
+
+describe('esUuid', () => {
+  it('accepts well-formed UUIDs and rejects anything else', () => {
+    expect(esUuid('d0000000-0000-0000-0000-000000000001')).toBe(true)
+    expect(esUuid('D0000000-0000-0000-0000-00000000000A')).toBe(true)
+    expect(esUuid('not-a-uuid')).toBe(false)
+    expect(esUuid('')).toBe(false)
+    expect(esUuid(undefined)).toBe(false)
+  })
+})
+
+describe('hoyRioplatense', () => {
+  it('uses the Buenos Aires date, not the UTC one', () => {
+    // 01:30 UTC on the 19th is still 22:30 on the 18th in UTC-3.
+    expect(hoyRioplatense(new Date('2026-11-19T01:30:00Z'))).toBe('2026-11-18')
+    expect(hoyRioplatense(new Date('2026-11-19T03:00:00Z'))).toBe('2026-11-19')
+  })
+  it('rolls over the year in local time', () => {
+    expect(hoyRioplatense(new Date('2027-01-01T02:59:00Z'))).toBe('2026-12-31')
   })
 })

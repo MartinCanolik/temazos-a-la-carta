@@ -203,7 +203,9 @@ function EnComun({ suyoId, suNombre }: { suyoId: string; suNombre: string }) {
 
 /** Upcoming public shows where this musician plays (from the public agenda, so private ones never show). */
 function ProximosShows({ slug, nombre }: { slug: string | null; nombre: string }) {
-  const { data: shows } = useAgendaPublica({ musicoSlug: slug })
+  // Without a slug the filter would be dropped and the whole agenda fetched, so the query stays off.
+  const { data: shows, isError } = useAgendaPublica({ musicoSlug: slug }, !!slug)
+  if (slug && isError) return <p className={styles.muted}>No se pudieron cargar los próximos shows.</p>
   if (!slug || !shows || shows.length === 0) return null
 
   return (

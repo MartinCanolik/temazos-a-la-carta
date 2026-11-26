@@ -10,17 +10,17 @@ import {
   CHIP_INICIAL,
   CHIPS_FECHA,
   etiquetaDia,
+  hoyRioplatense,
   opcionesUbicacion,
   rangoChip,
   type ChipFecha,
 } from '@/lib/agenda'
-import { hoyISO } from '@/lib/shows'
 import { PanelLayout } from './panel/PanelLayout'
 import styles from './panel/panel.module.css'
 
 /** "Música en vivo" (/shows): upcoming public shows, no login needed. */
 export function MusicaEnVivo() {
-  const hoy = useMemo(() => hoyISO(), [])
+  const hoy = useMemo(() => hoyRioplatense(), [])
   const [chip, setChip] = useState<ChipFecha>(CHIP_INICIAL)
   const [ubicacion, setUbicacion] = useState('')
 

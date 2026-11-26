@@ -1,8 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { TarjetaShow } from '@/components/TarjetaShow'
 import { useShowPublico } from '@/hooks/useAgenda'
-import { etiquetaDia } from '@/lib/agenda'
-import { hoyISO } from '@/lib/shows'
+import { etiquetaDia, hoyRioplatense } from '@/lib/agenda'
 import { PanelLayout } from './panel/PanelLayout'
 import styles from './panel/panel.module.css'
 
@@ -27,7 +26,7 @@ export function ShowPublico() {
       {show && (
         <>
           <div>
-            <p className={styles.kicker}>{etiquetaDia(show.fecha, hoyISO())}</p>
+            <p className={styles.kicker}>{etiquetaDia(show.fecha, hoyRioplatense())}</p>
             <h1 className={styles.title}>{show.nombre}</h1>
           </div>
           <TarjetaShow show={show} detalle />
