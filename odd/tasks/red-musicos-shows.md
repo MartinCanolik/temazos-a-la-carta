@@ -86,6 +86,15 @@ Today each musician's data is an island:
 
 - 2026-11-19: added a launch flag at the user's request: the app is used live tonight, so Etapa 3 stays hidden. Admins (or everyone with `VITE_RED_MUSICOS=true`) see it. Commit c595631, PR #21. Tests (144), lint and build pass. Browser checks: with the flag off, anonymous and musician users see nothing new and the new routes redirect; an admin sees it. Review assessment returned `under_budget` (278 lines).
 
+- 2026-11-26: production rollout.
+  - Backed up the production schema, data and roles with `supabase db dump`, outside the repo.
+  - Before the push, production had only `pedidos` (0 rows, same columns, policies and realtime as the migration) and 1 auth user; no migrations were registered.
+  - `db push` applied all 13 migrations, now registered remotely. The existing user got a profile from the backfill and was set to admin.
+  - Merged PRs #11 and #12–#21 into `main` in order, retargeting each to `main` first. Vercel deployed both projects successfully.
+  - Production checks: `/`, `/panel`, `/login`, `/shows`, `/rankings` and `/m/x` return 200, so `vercel.json` works. The public playlist and the "hasta 2 temazos" limit work. Etapa 3 stays hidden: `/rankings` redirects to `/` and the nav shows only Donaciones and Pedidos.
+  - Pending: Auth Site URL is still `http://localhost:3000` and there are no Redirect URLs. The dashboard field is disabled for this account's org role, so the project owner must set Site URL to `https://musica-a-la-carta.vercel.app` and add `https://musica-a-la-carta.vercel.app/**`. Custom SMTP is optional.
+  - Local `config.toml` now matches production's Postgres 17.
+
 ## Delivery
 
 Merge the stacked PRs to `main` in order. PR #11 (`vercel.json` SPA rewrite) is independent. Then production setup, which needs the owner of the Supabase project and of Vercel:
