@@ -40,6 +40,8 @@ export function parsearListaCanciones(texto: string): { titulo: string; artista:
 interface CancionComparable {
   titulo: string
   artista: string
+  /** Catalog id: when both sides have it, it is an exact match. */
+  cancion_id?: string | null
   spotify_track_id?: string | null
 }
 
@@ -51,16 +53,19 @@ export interface ComparacionRepertorios<T extends CancionComparable> {
 }
 
 /**
- * Compara dos repertorios. Dos canciones son la misma si comparten el track de Spotify
- * o si coinciden título + artista normalizados (sin acentos, mayúsculas ni "(En vivo)").
+ * Compara dos repertorios. Dos canciones son la misma si comparten el id del catálogo
+ * (coincidencia exacta) o, como respaldo, el track de Spotify o título + artista
+ * normalizados (sin acentos, mayúsculas ni "(En vivo)").
  */
 export function compararRepertorios<T extends CancionComparable>(
   mias: T[],
   suyas: T[],
 ): ComparacionRepertorios<T> {
+  const suyasPorCatalogo = new Map<string, T>()
   const suyasPorClave = new Map<string, T>()
   const suyasPorSpotify = new Map<string, T>()
   for (const s of suyas) {
+    if (s.cancion_id) suyasPorCatalogo.set(s.cancion_id, s)
     suyasPorClave.set(claveCancion(s.titulo, s.artista), s)
     if (s.spotify_track_id) suyasPorSpotify.set(s.spotify_track_id, s)
   }
@@ -71,6 +76,7 @@ export function compararRepertorios<T extends CancionComparable>(
 
   for (const m of mias) {
     const suya =
+      (m.cancion_id ? suyasPorCatalogo.get(m.cancion_id) : undefined) ??
       (m.spotify_track_id ? suyasPorSpotify.get(m.spotify_track_id) : undefined) ??
       suyasPorClave.get(claveCancion(m.titulo, m.artista))
     if (suya && !suyasUsadas.has(suya)) {
