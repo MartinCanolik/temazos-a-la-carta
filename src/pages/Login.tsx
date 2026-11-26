@@ -21,11 +21,16 @@ export function Login() {
 
   async function handleGoogle() {
     setGoogleStatus('redirecting')
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}${from}` },
-    })
-    if (error) setGoogleStatus('error')
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}${from}` },
+      })
+      if (error) setGoogleStatus('error')
+    } catch {
+      // A rejected call (not just an error result) must not leave the button stuck.
+      setGoogleStatus('error')
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
