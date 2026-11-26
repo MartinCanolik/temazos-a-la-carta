@@ -46,6 +46,12 @@ export function PanelHome() {
       text: 'Las canciones que tocás y tu versión.',
     },
     {
+      to: '/panel/repertorios',
+      icon: '📋',
+      title: 'Repertorios',
+      text: 'Armá el setlist con tu formación y reusá los anteriores.',
+    },
+    {
       to: '/panel/formacion',
       icon: '🎤',
       title: 'Formación',
