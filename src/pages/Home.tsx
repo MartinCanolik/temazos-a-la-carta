@@ -1,11 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './Home.module.css'
 import { Navbar } from '@/components/Navbar'
+import { useAuth } from '@/auth/authContext'
 import { useRedMusicos } from '@/hooks/useRedMusicos'
 import { CONTRATANOS_URL } from '@/lib/contacto'
 
 export function Home() {
   const redMusicos = useRedMusicos()
+  const { session } = useAuth()
   const navigate = useNavigate()
 
   return (
@@ -60,9 +62,9 @@ export function Home() {
         </Link>
       )}
 
-      {/* Acceso discreto al área de músicos */}
+      {/* Acceso discreto al área de músicos: logueado ya no hace falta presentarse */}
       <Link to="/panel" className={styles.musicosLink}>
-        Soy músico
+        {session ? 'Mi perfil' : 'Soy músico'}
       </Link>
     </div>
   )
