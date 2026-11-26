@@ -46,6 +46,12 @@ export function PanelHome() {
       text: 'Las canciones que tocás y tu versión.',
     },
     {
+      to: '/panel/formacion',
+      icon: '🎤',
+      title: 'Formación',
+      text: 'Qué saben todos y qué hay que ensayar.',
+    },
+    {
       to: '/panel/comparar',
       icon: '🤝',
       title: 'En común',

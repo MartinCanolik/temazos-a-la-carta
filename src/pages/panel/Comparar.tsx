@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { slugDesdeLink } from '@/lib/canciones'
 import { PanelLayout } from './PanelLayout'
 import styles from './panel.module.css'
@@ -53,6 +53,10 @@ export function Comparar() {
           Comparar
         </button>
       </form>
+
+      <Link to="/panel/formacion" className={styles.muted} style={{ textAlign: 'center' }}>
+        ¿Son más de dos? Armá una formación
+      </Link>
     </PanelLayout>
   )
 }

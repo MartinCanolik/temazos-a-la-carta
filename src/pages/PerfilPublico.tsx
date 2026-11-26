@@ -5,6 +5,7 @@ import { useCancionesDe } from '@/hooks/useCancionesMusico'
 import { useAuth } from '@/auth/authContext'
 import { instagramUrl, perfilUrl, whatsappUrl } from '@/lib/perfil'
 import { compararRepertorios } from '@/lib/canciones'
+import { compatibilidad } from '@/lib/compatibilidad'
 import { PanelLayout } from './panel/PanelLayout'
 import styles from './panel/panel.module.css'
 
@@ -148,11 +149,16 @@ function EnComun({ suyoId, suNombre }: { suyoId: string; suNombre: string }) {
   }
 
   const { enComun, soloMias, soloSuyas } = comparacion
+  const { porcentaje } = compatibilidad(
+    (mias ?? []).map((c) => c.cancion_id),
+    (suyas ?? []).map((c) => c.cancion_id),
+  )
 
   return (
     <section className={styles.card} aria-labelledby="en-comun-titulo">
       <h2 id="en-comun-titulo" className={styles.cardTitle}>
-        🤝 {enComun.length} {enComun.length === 1 ? 'canción' : 'canciones'} en común
+        🤝 {porcentaje}% de compatibilidad · {enComun.length}{' '}
+        {enComun.length === 1 ? 'canción' : 'canciones'} en común
       </h2>
       <p className={styles.cardMuted}>
         Vos tocás {soloMias.length} que {suNombre} no tiene, y {suNombre} toca {soloSuyas.length}{' '}

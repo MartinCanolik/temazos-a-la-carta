@@ -10,6 +10,7 @@ import { PanelHome } from '@/pages/panel/PanelHome'
 import { EditarPerfil } from '@/pages/panel/EditarPerfil'
 import { MiRepertorio } from '@/pages/panel/MiRepertorio'
 import { Comparar } from '@/pages/panel/Comparar'
+import { Formacion } from '@/pages/panel/Formacion'
 import { MisToques } from '@/pages/panel/MisToques'
 import { EditarToque } from '@/pages/panel/EditarToque'
 import { GestionCola } from '@/pages/panel/GestionCola'
@@ -93,6 +94,14 @@ export function App() {
                 element={
                   <RequireMusico>
                     <GestionCola />
+                  </RequireMusico>
+                }
+              />
+              <Route
+                path="/panel/formacion"
+                element={
+                  <RequireMusico>
+                    <Formacion />
                   </RequireMusico>
                 }
               />
