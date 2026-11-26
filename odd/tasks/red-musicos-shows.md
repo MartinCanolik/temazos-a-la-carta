@@ -93,7 +93,7 @@ Today each musician's data is an island:
   - Merged PRs #11 and #12–#21 into `main` in order, retargeting each to `main` first. Vercel deployed both projects successfully.
   - Production checks: `/`, `/panel`, `/login`, `/shows`, `/rankings` and `/m/x` return 200, so `vercel.json` works. The public playlist and the "hasta 2 temazos" limit work. Etapa 3 stays hidden: `/rankings` redirects to `/` and the nav shows only Donaciones and Pedidos.
   - Pending: Auth Site URL is still `http://localhost:3000` and there are no Redirect URLs. The dashboard field is disabled for this account's org role, so the project owner must set Site URL to `https://musica-a-la-carta.vercel.app` and add `https://musica-a-la-carta.vercel.app/**`. Custom SMTP is optional.
-  - Local `config.toml` now matches production's Postgres 17.
+  - Local `config.toml` now matches production's Postgres 17. A local stack created on Postgres 15 can't reuse its data volume, so recreate it with `npx supabase stop --no-backup` and then `npx supabase start`. That reapplies the migrations and the seed; only local test data is lost. Verified locally: server 17.11, all 13 migrations and the seed apply, `yarn test:db` passes 100/100.
 
 ## Delivery
 
