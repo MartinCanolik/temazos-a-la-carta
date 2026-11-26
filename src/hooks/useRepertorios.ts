@@ -108,6 +108,29 @@ export function useRepertoriosDeFormacion(musicoIds: string[], excluirId: string
   })
 }
 
+/** Nombres de repertorios por id (id → nombre), pedidos en tandas para no pasarse del largo de la URL. */
+export function useNombresRepertorios(ids: string[]) {
+  const clave = [...new Set(ids)].sort().join(',')
+  return useQuery({
+    queryKey: ['repertorios-nombres', clave],
+    enabled: ids.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<Map<string, string>> => {
+      const unicos = clave.split(',')
+      const nombres = new Map<string, string>()
+      for (let i = 0; i < unicos.length; i += 100) {
+        const { data, error } = await supabase
+          .from('repertorios')
+          .select('id, nombre')
+          .in('id', unicos.slice(i, i + 100))
+        if (error) throw error
+        for (const r of data ?? []) nombres.set(r.id, r.nombre)
+      }
+      return nombres
+    },
+  })
+}
+
 /** Detalle de un repertorio con sus temas en orden. */
 export async function fetchRepertorio(id: string): Promise<RepertorioDetalle | null> {
   const { data, error } = await supabase

@@ -14,6 +14,7 @@ import { Formacion } from '@/pages/panel/Formacion'
 import { Repertorios } from '@/pages/panel/Repertorios'
 import { ArmarRepertorio } from '@/pages/panel/ArmarRepertorio'
 import { Shows } from '@/pages/panel/Shows'
+import { Estadisticas } from '@/pages/panel/Estadisticas'
 import { EditarShow } from '@/pages/panel/EditarShow'
 import { GestionCola } from '@/pages/panel/GestionCola'
 import { PerfilPublico } from '@/pages/PerfilPublico'
@@ -100,6 +101,14 @@ export function App() {
                 }
               />
               {/* The old per-musician "toques" became shows */}
+              <Route
+                path="/panel/estadisticas"
+                element={
+                  <RequireMusico>
+                    <Estadisticas />
+                  </RequireMusico>
+                }
+              />
               <Route path="/panel/toques" element={<Navigate to="/panel/shows" replace />} />
               <Route path="/panel/toques/:id" element={<Navigate to="/panel/shows" replace />} />
               <Route
