@@ -383,9 +383,95 @@ export type Database = {
         Args: { p_show_id: string; p_cancion_ids: string[] }
         Returns: undefined
       }
+      agenda_publica: {
+        Args: {
+          p_desde?: string | null
+          p_hasta?: string | null
+          p_ciudad?: string | null
+          p_zona?: string | null
+          p_musico_slug?: string | null
+          p_show_id?: string | null
+        }
+        Returns: AgendaPublicaFila[]
+      }
+      agenda_publica_lugares: {
+        Args: Record<string, never>
+        Returns: UbicacionConShows[]
+      }
+      ranking_musicos: {
+        Args: RankingArgs
+        Returns: RankingMusicoFila[]
+      }
+      ranking_canciones: {
+        Args: RankingArgs
+        Returns: RankingCancionFila[]
+      }
+      ranking_lugares: {
+        Args: RankingArgs
+        Returns: RankingLugarFila[]
+      }
+      ranking_zonas: {
+        Args: Record<string, never>
+        Returns: UbicacionConShows[]
+      }
     }
     Enums: Record<string, never>
   }
+}
+
+/** A musician of a public show (accepted participants with a public profile only). */
+export interface MusicoAgenda {
+  nombre: string | null
+  slug: string
+  instrumentos: string[]
+}
+
+/** Row of `agenda_publica`: public data of an upcoming public show. Never carries fees or notes. */
+export interface AgendaPublicaFila {
+  id: string
+  nombre: string
+  fecha: string
+  hora: string | null
+  lugar: string | null
+  ciudad: string | null
+  zona: string | null
+  entrada_info: string | null
+  entrada_url: string | null
+  invitados: string | null
+  musicos: MusicoAgenda[]
+}
+
+/** City / zone pair with the number of shows behind it (`agenda_publica_lugares`, `ranking_zonas`). */
+export interface UbicacionConShows {
+  ciudad: string | null
+  zona: string | null
+  shows: number
+}
+
+export type PeriodoRanking = 'mes' | 'anio' | 'historico'
+
+export type RankingArgs = {
+  p_periodo?: PeriodoRanking
+  p_ciudad?: string | null
+  p_zona?: string | null
+}
+
+export interface RankingMusicoFila {
+  nombre: string | null
+  slug: string
+  shows: number
+}
+
+export interface RankingCancionFila {
+  titulo: string
+  artista: string
+  veces: number
+}
+
+export interface RankingLugarFila {
+  lugar: string
+  ciudad: string | null
+  shows: number
 }
 
 /** One song of the `p_canciones` payload of `guardar_repertorio`. */

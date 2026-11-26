@@ -6,6 +6,8 @@ import { useAuth } from '@/auth/authContext'
 import { instagramUrl, perfilUrl, whatsappUrl } from '@/lib/perfil'
 import { compararRepertorios } from '@/lib/canciones'
 import { compatibilidad } from '@/lib/compatibilidad'
+import { useAgendaPublica } from '@/hooks/useAgenda'
+import { TarjetaShow } from '@/components/TarjetaShow'
 import { PanelLayout } from './panel/PanelLayout'
 import styles from './panel/panel.module.css'
 
@@ -94,6 +96,8 @@ export function PerfilPublico() {
           )}
 
           {!esMio && <EnComun suyoId={perfil.id} suNombre={perfil.nombre ?? 'este músico'} />}
+
+          <ProximosShows slug={perfil.slug} nombre={perfil.nombre ?? 'este músico'} />
 
           <RepertorioPublico musicoId={perfil.id} />
         </>
@@ -193,6 +197,26 @@ function EnComun({ suyoId, suNombre }: { suyoId: string; suNombre: string }) {
           })}
         </ul>
       )}
+    </section>
+  )
+}
+
+/** Upcoming public shows where this musician plays (from the public agenda, so private ones never show). */
+function ProximosShows({ slug, nombre }: { slug: string | null; nombre: string }) {
+  const { data: shows } = useAgendaPublica({ musicoSlug: slug })
+  if (!slug || !shows || shows.length === 0) return null
+
+  return (
+    <section aria-labelledby="proximos-shows" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      <h2 id="proximos-shows" className={styles.sectionTitle}>
+        Próximos shows de {nombre}
+      </h2>
+      {shows.map((s) => (
+        <TarjetaShow key={s.id} show={s} sinMusico={slug} />
+      ))}
+      <Link to="/shows" className={styles.muted} style={{ textAlign: 'center' }}>
+        Ver toda la música en vivo
+      </Link>
     </section>
   )
 }
