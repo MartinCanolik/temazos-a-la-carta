@@ -225,6 +225,12 @@ function CancionForm({ musicoId, instrumentosPerfil, cancion, onDone }: CancionF
     }
   }
 
+  // Spelling lives in the shared catalog: a case/accent-only change keeps the same song, so say so.
+  const mismaCancionDelCatalogo =
+    !!cancion &&
+    claveCancion(titulo, artista) === claveCancion(cancion.titulo, cancion.artista) &&
+    (titulo.trim() !== cancion.titulo || artista.trim() !== cancion.artista)
+
   return (
     <form className={styles.card} onSubmit={handleSubmit}>
       <h2 className={styles.cardTitle}>{cancion ? 'Editar canción' : 'Agregar canción'}</h2>
@@ -264,6 +270,12 @@ function CancionForm({ musicoId, instrumentosPerfil, cancion, onDone }: CancionF
           />
         </div>
       </div>
+
+      {mismaCancionDelCatalogo && (
+        <p className={styles.hint} role="status">
+          La forma de escribir el título y el artista es la del catálogo compartido.
+        </p>
+      )}
 
       {mostrarSugerencias && (
         <div id="c-sugerencias" role="group" aria-label="Canciones del catálogo">

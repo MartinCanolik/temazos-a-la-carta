@@ -173,15 +173,18 @@ grant select, insert, update, delete on public.show_cobros to authenticated;
 --   entrada_info, entrada_url, repertorio_id, invitados, notas}. On update the document
 --   is replaced as a whole, except `estado` / `visibilidad`, which keep their value when
 --   absent.
--- p_musicos: the full lineup (the creator is always kept). New musicians become
---   'pendiente'; existing ones keep their state. Dropping someone is creator-only.
+-- p_musicos: musicians to add or keep (the creator is always kept). New ones become
+--   'pendiente'; existing ones keep their state. It NEVER deletes anyone, so a save from a
+--   stale form cannot drop people invited in the meantime.
+-- p_quitar: musicians to remove explicitly (their private fee goes with them). Creator-only.
 -- p_cobro: {importe, moneda, estado_cobro, cobrado_en, notas}: the CALLER's own fee.
 --   A null/empty `importe` removes it. Omit (null) to leave it untouched.
 create or replace function public.guardar_show(
   p_id uuid,
   p_datos jsonb,
   p_musicos uuid[],
-  p_cobro jsonb default null
+  p_cobro jsonb default null,
+  p_quitar uuid[] default '{}'
 )
 returns uuid
 language plpgsql
@@ -206,6 +209,7 @@ declare
   v_invit    text;
   v_notas    text;
   v_lineup   uuid[];
+  v_quitar   uuid[];
   v_cob_est  text;
 begin
   if v_uid is null then
@@ -273,18 +277,24 @@ begin
     where id = v_id;
   end if;
 
-  -- Requested lineup: real accounts only, de-duplicated, creator always included.
-  select coalesce(array_agg(distinct u.id), '{}') into v_lineup
-  from auth.users u
-  where u.id = any (coalesce(p_musicos, '{}') || v_creador);
+  -- Explicit removals (never the creator). Only the creator may remove people.
+  select coalesce(array_agg(distinct x), '{}') into v_quitar
+  from unnest(coalesce(p_quitar, '{}')) as x
+  where x <> v_creador;
 
-  if exists (select 1 from show_musicos m where m.show_id = v_id and m.musico_id <> all (v_lineup)) then
+  if coalesce(array_length(v_quitar, 1), 0) > 0 then
     if v_uid <> v_creador then
       raise exception 'Only the creator can remove musicians' using errcode = '42501';
     end if;
-    delete from show_cobros c where c.show_id = v_id and c.musico_id <> all (v_lineup);
-    delete from show_musicos m where m.show_id = v_id and m.musico_id <> all (v_lineup);
+    delete from show_cobros c where c.show_id = v_id and c.musico_id = any (v_quitar);
+    delete from show_musicos m where m.show_id = v_id and m.musico_id = any (v_quitar);
   end if;
+
+  -- Musicians to add or keep: real accounts only, de-duplicated, creator always included.
+  select coalesce(array_agg(distinct u.id), '{}') into v_lineup
+  from auth.users u
+  where u.id = any (coalesce(p_musicos, '{}') || v_creador)
+    and u.id <> all (v_quitar);
 
   insert into show_musicos (show_id, musico_id, estado, invitado_por)
   select v_id, x, 'pendiente', v_uid from unnest(v_lineup) as x
@@ -320,8 +330,8 @@ begin
 end;
 $$;
 
-revoke all on function public.guardar_show(uuid, jsonb, uuid[], jsonb) from public, anon;
-grant execute on function public.guardar_show(uuid, jsonb, uuid[], jsonb) to authenticated;
+revoke all on function public.guardar_show(uuid, jsonb, uuid[], jsonb, uuid[]) from public, anon;
+grant execute on function public.guardar_show(uuid, jsonb, uuid[], jsonb, uuid[]) to authenticated;
 
 -- ─── Invitations ────────────────────────────────────────────────────────────
 -- Accept (from pending or a previous decline) or decline (only a pending invitation).

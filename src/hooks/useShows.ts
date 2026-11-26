@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '@/auth/authContext'
 import { supabase } from '@/lib/supabase'
 import type { CobroInput, ShowCobro, ShowDatosInput } from '@/lib/database.types'
 import type { ShowConParticipantes, Tema } from '@/lib/shows'
@@ -41,15 +42,38 @@ export function useShow(id: string | undefined) {
   })
 }
 
+const PAGINA = 1000
+
+/** Reads every page of a query: PostgREST caps a response at 1000 rows and would otherwise undercount silently. */
+async function leerTodo<T>(
+  pagina: (desde: number, hasta: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const filas: T[] = []
+  for (let desde = 0; ; desde += PAGINA) {
+    const { data, error } = await pagina(desde, desde + PAGINA - 1)
+    if (error) throw error
+    filas.push(...(data ?? []))
+    if ((data?.length ?? 0) < PAGINA) return filas
+  }
+}
+
 /** My own fees (RLS: owner-only), keyed by show id. */
 export function useMisCobros(enabled = true) {
+  const { user } = useAuth()
+  const miId = user?.id
   return useQuery({
     queryKey: misCobrosKey,
-    enabled,
+    enabled: enabled && !!miId,
     queryFn: async (): Promise<Map<string, ShowCobro>> => {
-      const { data, error } = await supabase.from('show_cobros').select('*')
-      if (error) throw error
-      return new Map((data ?? []).map((c) => [c.show_id, c]))
+      const data = await leerTodo<ShowCobro>((d, h) =>
+        supabase
+          .from('show_cobros')
+          .select('*')
+          .eq('musico_id', miId!)
+          .order('show_id', { ascending: true })
+          .range(d, h),
+      )
+      return new Map(data.map((c) => [c.show_id, c]))
     },
   })
 }
@@ -83,17 +107,25 @@ export interface TocadaDeShow extends Tema {
   show_id: string
 }
 
-/** Played songs of every show I can see (callers keep only the shows I accepted). */
+/** Played songs of the shows I accepted (filtered server-side, read page by page). */
 export function useTocadasDeMisShows(enabled = true) {
+  const { user } = useAuth()
+  const miId = user?.id
   return useQuery({
     queryKey: tocadasDeMisShowsKey,
-    enabled,
+    enabled: enabled && !!miId,
     queryFn: async (): Promise<TocadaDeShow[]> => {
-      const { data, error } = await supabase
-        .from('show_canciones_tocadas')
-        .select('show_id, cancion_id, cancion:canciones(titulo, artista)')
-      if (error) throw error
-      return ((data ?? []) as unknown as (FilaTocada & { show_id: string })[])
+      const data = await leerTodo<unknown>((d, h) =>
+        supabase
+          .from('show_canciones_tocadas')
+          .select('show_id, cancion_id, cancion:canciones(titulo, artista), show:shows!inner(show_musicos!inner(musico_id, estado))')
+          .eq('show.show_musicos.musico_id', miId!)
+          .eq('show.show_musicos.estado', 'aceptado')
+          .order('show_id', { ascending: true })
+          .order('cancion_id', { ascending: true })
+          .range(d, h),
+      )
+      return (data as (FilaTocada & { show_id: string })[])
         .filter((f) => f.cancion)
         .map((f) => ({
           show_id: f.show_id,
@@ -122,7 +154,10 @@ function useInvalidarShows() {
 export interface GuardarShowInput {
   id: string | null
   datos: ShowDatosInput
+  /** Musicians to add or keep; the server never deletes from this list. */
   musicoIds: string[]
+  /** Explicit removals (creator only). */
+  quitarIds?: string[]
   /** My own fee; leave undefined to keep it untouched. */
   cobro?: CobroInput
 }
@@ -137,6 +172,7 @@ export function useGuardarShow() {
         p_datos: i.datos,
         p_musicos: i.musicoIds,
         p_cobro: i.cobro ?? null,
+        p_quitar: i.quitarIds ?? [],
       })
       if (error) throw error
       return data

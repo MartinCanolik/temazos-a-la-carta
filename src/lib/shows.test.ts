@@ -219,12 +219,20 @@ describe('musicosAGuardar', () => {
   const existentes = ['creator', 'a', 'sin-slug']
   const resolubles = new Set(['creator', 'a'])
 
-  it('lets the creator drop resolvable participants only', () => {
-    expect(musicosAGuardar(['creator', 'nuevo'], existentes, true, resolubles).sort()).toEqual(['creator', 'nuevo', 'sin-slug'])
+  it('only removes resolvable participants that were dropped from the form', () => {
+    expect(musicosAGuardar(['creator', 'nuevo'], existentes, resolubles)).toEqual({
+      agregar: ['creator', 'nuevo'],
+      quitar: ['a'],
+    })
   })
 
-  it('never drops anyone when the caller is not the creator', () => {
-    expect(musicosAGuardar(['me', 'nuevo'], existentes, false, resolubles).sort()).toEqual(['a', 'creator', 'me', 'nuevo', 'sin-slug'])
+  it('never removes someone invited meanwhile (not in the loaded participants)', () => {
+    const r = musicosAGuardar(['creator', 'a'], existentes, resolubles)
+    expect(r.quitar).toEqual([])
+  })
+
+  it('removes nothing when profiles could not be resolved', () => {
+    expect(musicosAGuardar(['creator'], existentes, new Set()).quitar).toEqual([])
   })
 })
 

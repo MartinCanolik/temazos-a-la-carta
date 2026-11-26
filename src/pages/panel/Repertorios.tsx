@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/auth/authContext'
 import { usePerfilesPorId } from '@/hooks/usePerfiles'
 import { useDuplicarRepertorio, useRepertorios } from '@/hooks/useRepertorios'
 import { PanelLayout } from './PanelLayout'
@@ -11,16 +10,13 @@ const formatearFechaCorta = (iso: string) =>
 
 /** Mis repertorios: los que creé o donde estoy en la formación, el más reciente primero. */
 export function Repertorios() {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const { data: todos, isLoading, isError } = useRepertorios()
   const duplicar = useDuplicarRepertorio()
   const [errorDup, setErrorDup] = useState<string | null>(null)
 
-  const mios = useMemo(
-    () => (todos ?? []).filter((r) => r.creado_por === user?.id || r.musicoIds.includes(user?.id ?? '')),
-    [todos, user?.id],
-  )
+  // useRepertorios already returns only my setlists (filtered server-side).
+  const mios = useMemo(() => todos ?? [], [todos])
   const idsMusicos = useMemo(() => [...new Set(mios.flatMap((r) => r.musicoIds))], [mios])
   const { data: perfiles } = usePerfilesPorId(idsMusicos)
   const nombres = useMemo(
