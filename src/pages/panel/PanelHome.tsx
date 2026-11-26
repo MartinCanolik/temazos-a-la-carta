@@ -1,11 +1,20 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/authContext'
-import { useToques, useSetlists } from '@/hooks/useToques'
+import { useMisCobros, useShows, useTocadasDeMisShows } from '@/hooks/useShows'
 import { useCancionesDe } from '@/hooks/useCancionesMusico'
 import { usePedidosCount } from '@/hooks/usePedidos'
-import { formatearFecha, formatearHora, formatearPlata, hoyISO } from '@/lib/toques'
-import type { Moneda } from '@/lib/database.types'
+import {
+  dividirAgenda,
+  esDelMes,
+  formatearFecha,
+  formatearHora,
+  formatearTotales,
+  hoyISO,
+  masTocadas,
+  miEstado,
+  totalesPorMoneda,
+} from '@/lib/shows'
 import { PanelLayout } from './PanelLayout'
 import styles from './panel.module.css'
 
@@ -34,10 +43,10 @@ export function PanelHome() {
   }
   accesos.push(
     {
-      to: '/panel/toques',
+      to: '/panel/shows',
       icon: '📅',
-      title: 'Mis toques',
-      text: 'Agenda, paga y setlist de cada toque.',
+      title: 'Mis shows',
+      text: 'Agenda compartida, invitaciones, cobros y temas tocados.',
     },
     {
       to: '/panel/repertorio',
@@ -115,81 +124,84 @@ export function PanelHome() {
   )
 }
 
-/** Estadísticas: próximo toque, toques y plata del mes, repertorio y canciones más tocadas. */
+
+/** Estadísticas: próximo show, shows y plata del mes, repertorio y canciones más tocadas. */
 function Resumen({ musicoId }: { musicoId: string | undefined }) {
-  const { data: toques } = useToques(musicoId)
-  const { data: setlists } = useSetlists(musicoId)
+  const { data: shows } = useShows(!!musicoId)
+  const { data: cobros } = useMisCobros(!!musicoId)
+  const { data: tocadas } = useTocadasDeMisShows(!!musicoId)
   const { data: canciones } = useCancionesDe(musicoId)
 
   const datos = useMemo(() => {
     const hoy = hoyISO()
-    const mes = hoy.slice(0, 7)
-    const lista = toques ?? []
-    const proximos = lista.filter((t) => t.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha))
-    const delMes = lista.filter((t) => t.fecha.startsWith(mes))
+    // Only shows I accepted count: pending and declined invitations are left out.
+    const aceptados = (shows ?? []).filter((s) => miEstado(s, musicoId) === 'aceptado')
+    const { proximos } = dividirAgenda(aceptados, musicoId, hoy)
+    const delMes = aceptados.filter((s) => s.estado === 'realizado' && esDelMes(s.fecha, hoy))
 
-    const plataMes = new Map<Moneda, number>()
-    for (const t of delMes) {
-      if (t.paga != null) plataMes.set(t.moneda, (plataMes.get(t.moneda) ?? 0) + Number(t.paga))
-    }
+    // My own fees for this month's shows, never mixing currencies.
+    const cobrosDelMes = aceptados
+      .filter((s) => s.estado !== 'cancelado' && esDelMes(s.fecha, hoy))
+      .map((s) => cobros?.get(s.id))
+      .filter((c): c is NonNullable<typeof c> => !!c)
+    const cobrado = totalesPorMoneda(cobrosDelMes.filter((c) => c.estado_cobro === 'cobrado'))
+    const pendiente = totalesPorMoneda(cobrosDelMes.filter((c) => c.estado_cobro === 'pendiente'))
 
-    const vecesPorCancion = new Map<string, number>()
-    for (const s of setlists ?? []) {
-      vecesPorCancion.set(s.cancion_id, (vecesPorCancion.get(s.cancion_id) ?? 0) + 1)
-    }
-    const porId = new Map((canciones ?? []).map((c) => [c.id, c]))
-    const masTocadas = [...vecesPorCancion.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([id, veces]) => ({ cancion: porId.get(id), veces }))
-      .filter((x) => x.cancion)
+    // Most played songs: only the confirmed songs of shows I accepted.
+    const idsAceptados = new Set(aceptados.map((s) => s.id))
+    const propias = (tocadas ?? []).filter((t) => idsAceptados.has(t.show_id))
+    const porId = new Map(propias.map((t) => [t.cancion_id, t]))
+    const topCanciones = masTocadas(
+      propias.map((t) => t.cancion_id),
+      5,
+    ).map(({ cancion_id, veces }) => ({ cancion: porId.get(cancion_id)!, veces }))
 
-    return { proximo: proximos[0], cantProximos: proximos.length, delMes, plataMes, masTocadas }
-  }, [toques, setlists, canciones])
+    return { proximo: proximos[0], delMes, cobrado, pendiente, topCanciones }
+  }, [shows, cobros, tocadas, musicoId])
 
-  if (!toques) return null
+  if (!shows) return null
 
-  const plataTexto =
-    datos.plataMes.size === 0
-      ? '—'
-      : [...datos.plataMes.entries()].map(([m, v]) => formatearPlata(v, m)).join(' + ')
+  const cobradoTexto = formatearTotales(datos.cobrado)
+  const hayPendiente = Object.keys(datos.pendiente).length > 0
 
   return (
     <>
       {datos.proximo ? (
-        <Link to={`/panel/toques/${datos.proximo.id}`} className={styles.card}>
-          <span className={styles.cardMuted}>Próximo toque</span>
+        <Link to={`/panel/shows/${datos.proximo.id}`} className={styles.card}>
+          <span className={styles.cardMuted}>Próximo show</span>
           <span className={styles.cardTitle} style={{ fontSize: 'var(--text-lg)' }}>
-            {datos.proximo.lugar}
+            {datos.proximo.nombre}
           </span>
           <span className={styles.cardMuted}>
             {[
               formatearFecha(datos.proximo.fecha),
               formatearHora(datos.proximo.hora),
+              datos.proximo.lugar,
               datos.proximo.ciudad,
-              datos.proximo.formato,
             ]
               .filter(Boolean)
               .join(' · ')}
           </span>
         </Link>
       ) : (
-        <Link to="/panel/toques/nuevo" className={styles.card}>
-          <span className={styles.cardTitle}>📅 No tenés toques agendados</span>
-          <span className={styles.cardMuted}>Registrá el próximo →</span>
+        <Link to="/panel/shows/nuevo" className={styles.card}>
+          <span className={styles.cardTitle}>📅 No tenés shows agendados</span>
+          <span className={styles.cardMuted}>Cargá el próximo →</span>
         </Link>
       )}
 
       <div className={styles.stats}>
         <div className={styles.stat}>
           <span className={styles.statValue}>{datos.delMes.length}</span>
-          <span className={styles.statLabel}>toques este mes</span>
+          <span className={styles.statLabel}>shows este mes</span>
         </div>
         <div className={styles.stat}>
-          <span className={styles.statValue} style={{ fontSize: plataTexto.length > 9 ? 'var(--text-base)' : undefined }}>
-            {plataTexto}
+          <span className={styles.statValue} style={{ fontSize: cobradoTexto.length > 9 ? 'var(--text-base)' : undefined }}>
+            {cobradoTexto}
           </span>
-          <span className={styles.statLabel}>cobrado este mes</span>
+          <span className={styles.statLabel}>
+            cobrado este mes{hayPendiente && ` · ${formatearTotales(datos.pendiente)} a cobrar`}
+          </span>
         </div>
         <div className={styles.stat}>
           <span className={styles.statValue}>{canciones?.length ?? 0}</span>
@@ -197,17 +209,17 @@ function Resumen({ musicoId }: { musicoId: string | undefined }) {
         </div>
       </div>
 
-      {datos.masTocadas.length > 0 && (
+      {datos.topCanciones.length > 0 && (
         <section className={styles.card} aria-labelledby="mas-tocadas">
           <h2 id="mas-tocadas" className={styles.cardTitle}>
             🔥 Las que más tocás
           </h2>
           <ol className={styles.list}>
-            {datos.masTocadas.map(({ cancion, veces }) => (
-              <li key={cancion!.id} className={styles.listItem}>
+            {datos.topCanciones.map(({ cancion, veces }) => (
+              <li key={cancion.cancion_id} className={styles.listItem}>
                 <div className={styles.listMain}>
-                  <span className={styles.listTitle}>{cancion!.titulo}</span>
-                  <span className={styles.listSub}>{cancion!.artista}</span>
+                  <span className={styles.listTitle}>{cancion.titulo}</span>
+                  <span className={styles.listSub}>{cancion.artista}</span>
                 </div>
                 <span className={styles.chip}>
                   {veces} {veces === 1 ? 'vez' : 'veces'}
