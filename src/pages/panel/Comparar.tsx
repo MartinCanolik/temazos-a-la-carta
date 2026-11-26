@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useRedMusicos } from '@/hooks/useRedMusicos'
 import { slugDesdeLink } from '@/lib/canciones'
 import { PanelLayout } from './PanelLayout'
 import styles from './panel.module.css'
 
 /** Pegar el link de otro músico para ver las canciones en común. */
 export function Comparar() {
+  const redMusicos = useRedMusicos()
   const navigate = useNavigate()
   const [link, setLink] = useState('')
   const [error, setError] = useState(false)
@@ -54,9 +56,11 @@ export function Comparar() {
         </button>
       </form>
 
-      <Link to="/panel/formacion" className={styles.muted} style={{ textAlign: 'center' }}>
-        ¿Son más de dos? Armá una formación
-      </Link>
+      {redMusicos && (
+        <Link to="/panel/formacion" className={styles.muted} style={{ textAlign: 'center' }}>
+          ¿Son más de dos? Armá una formación
+        </Link>
+      )}
     </PanelLayout>
   )
 }

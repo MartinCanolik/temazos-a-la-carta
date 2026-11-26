@@ -23,6 +23,8 @@ import { ShowPublico } from '@/pages/ShowPublico'
 import { Rankings } from '@/pages/Rankings'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { RequireMusico } from '@/auth/RequireMusico'
+import { useRedMusicos } from '@/hooks/useRedMusicos'
+import { RequireRedMusicos } from '@/components/RequireRedMusicos'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +34,12 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+/** Old "toques" URLs: shows when the network is visible, the panel home otherwise. */
+function RedirectToShows() {
+  const visible = useRedMusicos()
+  return <Navigate to={visible ? '/panel/shows' : '/panel'} replace />
+}
 
 export function App() {
   return (
@@ -44,9 +52,30 @@ export function App() {
               <Route path="/donaciones" element={<Donaciones />} />
               <Route path="/repertorio" element={<Repertorio />} />
               <Route path="/pedidos" element={<Pedidos />} />
-              <Route path="/shows" element={<MusicaEnVivo />} />
-              <Route path="/shows/:id" element={<ShowPublico />} />
-              <Route path="/rankings" element={<Rankings />} />
+              <Route
+                path="/shows"
+                element={
+                  <RequireRedMusicos to="/">
+                    <MusicaEnVivo />
+                  </RequireRedMusicos>
+                }
+              />
+              <Route
+                path="/shows/:id"
+                element={
+                  <RequireRedMusicos to="/">
+                    <ShowPublico />
+                  </RequireRedMusicos>
+                }
+              />
+              <Route
+                path="/rankings"
+                element={
+                  <RequireRedMusicos to="/">
+                    <Rankings />
+                  </RequireRedMusicos>
+                }
+              />
 
               {/* Área de músicos */}
               <Route path="/login" element={<Login />} />
@@ -86,7 +115,9 @@ export function App() {
                 path="/panel/shows"
                 element={
                   <RequireMusico>
-                    <Shows />
+                    <RequireRedMusicos to="/panel">
+                      <Shows />
+                    </RequireRedMusicos>
                   </RequireMusico>
                 }
               />
@@ -94,7 +125,9 @@ export function App() {
                 path="/panel/shows/nuevo"
                 element={
                   <RequireMusico>
-                    <EditarShow />
+                    <RequireRedMusicos to="/panel">
+                      <EditarShow />
+                    </RequireRedMusicos>
                   </RequireMusico>
                 }
               />
@@ -102,7 +135,9 @@ export function App() {
                 path="/panel/shows/:id"
                 element={
                   <RequireMusico>
-                    <EditarShow />
+                    <RequireRedMusicos to="/panel">
+                      <EditarShow />
+                    </RequireRedMusicos>
                   </RequireMusico>
                 }
               />
@@ -111,12 +146,14 @@ export function App() {
                 path="/panel/estadisticas"
                 element={
                   <RequireMusico>
-                    <Estadisticas />
+                    <RequireRedMusicos to="/panel">
+                      <Estadisticas />
+                    </RequireRedMusicos>
                   </RequireMusico>
                 }
               />
-              <Route path="/panel/toques" element={<Navigate to="/panel/shows" replace />} />
-              <Route path="/panel/toques/:id" element={<Navigate to="/panel/shows" replace />} />
+              <Route path="/panel/toques" element={<RedirectToShows />} />
+              <Route path="/panel/toques/:id" element={<RedirectToShows />} />
               <Route
                 path="/panel/cola"
                 element={
@@ -129,7 +166,9 @@ export function App() {
                 path="/panel/formacion"
                 element={
                   <RequireMusico>
-                    <Formacion />
+                    <RequireRedMusicos to="/panel">
+                      <Formacion />
+                    </RequireRedMusicos>
                   </RequireMusico>
                 }
               />
@@ -137,7 +176,9 @@ export function App() {
                 path="/panel/repertorios"
                 element={
                   <RequireMusico>
-                    <Repertorios />
+                    <RequireRedMusicos to="/panel">
+                      <Repertorios />
+                    </RequireRedMusicos>
                   </RequireMusico>
                 }
               />
@@ -145,7 +186,9 @@ export function App() {
                 path="/panel/repertorios/nuevo"
                 element={
                   <RequireMusico>
-                    <ArmarRepertorio />
+                    <RequireRedMusicos to="/panel">
+                      <ArmarRepertorio />
+                    </RequireRedMusicos>
                   </RequireMusico>
                 }
               />
@@ -153,7 +196,9 @@ export function App() {
                 path="/panel/repertorios/:id"
                 element={
                   <RequireMusico>
-                    <ArmarRepertorio />
+                    <RequireRedMusicos to="/panel">
+                      <ArmarRepertorio />
+                    </RequireRedMusicos>
                   </RequireMusico>
                 }
               />

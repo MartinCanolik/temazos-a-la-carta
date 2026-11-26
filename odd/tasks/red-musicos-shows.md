@@ -84,6 +84,8 @@ Today each musician's data is an island:
 
 - 2026-11-19: T0–T7 and both fix passes are done, verified and reviewed. Branches are pushed as stacked PRs to `main`.
 
+- 2026-11-19: added a launch flag at the user's request: the app is used live tonight, so Etapa 3 stays hidden. Admins (or everyone with `VITE_RED_MUSICOS=true`) see it. Commit c595631, PR #21. Tests (144), lint and build pass. Browser checks: with the flag off, anonymous and musician users see nothing new and the new routes redirect; an admin sees it. Review assessment returned `under_budget` (278 lines).
+
 ## Delivery
 
 Merge the stacked PRs to `main` in order. PR #11 (`vercel.json` SPA rewrite) is independent. Then production setup, which needs the owner of the Supabase project and of Vercel:
