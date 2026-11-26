@@ -65,6 +65,13 @@ max_frequency = "1s"
 otp_length = 6
 otp_expiry = 86400
 
+[auth.external.google]
+enabled = false
+# To try Google sign-in locally, set enabled = true and export the credentials:
+# client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+# secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+# skip_nonce_check = true  # needed for local development with Google
+
 [auth.sms]
 enable_signup = false
 enable_confirmations = false
